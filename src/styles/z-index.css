@@ -1,0 +1,140 @@
+/**
+ * Z-Index System for FunZone Owner App
+ * 
+ * This file defines a consistent z-index hierarchy to prevent
+ * UI elements from overlapping incorrectly.
+ */
+
+/* Base z-index values */
+:root {
+  --z-dropdown: 50;
+  --z-dropdown-backdrop: 40;
+  --z-modal: 60;
+  --z-modal-backdrop: 50;
+  --z-toast: 70;
+  --z-tooltip: 80;
+  --z-header: 20;
+  --z-back-button: 20;
+  --z-floating-button: 30;
+  --z-overlay: 10;
+}
+
+/* Language Switcher */
+.language-switcher-dropdown {
+  z-index: var(--z-dropdown) !important;
+}
+
+.language-switcher-backdrop {
+  z-index: var(--z-dropdown-backdrop) !important;
+}
+
+/* Ensure language switcher is always visible */
+.language-switcher {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+.language-switcher button {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+/* Override any conflicting z-index values */
+.language-switcher * {
+  position: relative;
+  z-index: var(--z-dropdown) !important;
+}
+
+/* Ensure dropdown appears above all other elements */
+.language-switcher .absolute {
+  z-index: var(--z-dropdown) !important;
+}
+
+/* Fix for venue pages where back button might interfere */
+.venue-page .language-switcher {
+  z-index: var(--z-dropdown) !important;
+}
+
+.venue-page .language-switcher * {
+  z-index: var(--z-dropdown) !important;
+}
+
+/* Modal Components */
+.modal {
+  z-index: var(--z-modal) !important;
+}
+
+.modal-backdrop {
+  z-index: var(--z-modal-backdrop) !important;
+}
+
+/* Toast Notifications */
+.toast {
+  z-index: var(--z-toast) !important;
+}
+
+/* Tooltips */
+.tooltip {
+  z-index: var(--z-tooltip) !important;
+}
+
+/* Header Elements */
+.header {
+  z-index: var(--z-header) !important;
+}
+
+/* Back Button */
+.back-button {
+  z-index: var(--z-back-button) !important;
+}
+
+/* Floating Action Buttons */
+.floating-button {
+  z-index: var(--z-floating-button) !important;
+}
+
+/* Overlay Elements */
+.overlay {
+  z-index: var(--z-overlay) !important;
+}
+
+/* Utility Classes for Z-Index */
+.z-dropdown {
+  z-index: var(--z-dropdown) !important;
+}
+
+.z-dropdown-backdrop {
+  z-index: var(--z-dropdown-backdrop) !important;
+}
+
+.z-modal {
+  z-index: var(--z-modal) !important;
+}
+
+.z-modal-backdrop {
+  z-index: var(--z-modal-backdrop) !important;
+}
+
+.z-toast {
+  z-index: var(--z-toast) !important;
+}
+
+.z-tooltip {
+  z-index: var(--z-tooltip) !important;
+}
+
+.z-header {
+  z-index: var(--z-header) !important;
+}
+
+.z-back-button {
+  z-index: var(--z-back-button) !important;
+}
+
+.z-floating-button {
+  z-index: var(--z-floating-button) !important;
+}
+
+.z-overlay {
+  z-index: var(--z-overlay) !important;
+}
