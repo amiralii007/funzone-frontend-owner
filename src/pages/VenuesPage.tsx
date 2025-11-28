@@ -8,6 +8,7 @@ import VenueLocationMap from '../components/VenueLocationMap'
 import { formatNumber, formatCurrency, toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
 import type { Venue } from '../types/owner'
 import { ImageUploadService } from '../services/imageUploadService'
+import { getErrorMessage } from '../utils/errorTranslator'
 
 export default function VenuesPage() {
   const [searchParams] = useSearchParams()
@@ -220,11 +221,11 @@ export default function VenuesPage() {
         },
         (error) => {
           console.error('Error getting location:', error)
-          alert('Unable to get your current location. Please select manually on the map.')
+          alert(t('owner.errorGettingLocation') || 'Unable to get your current location. Please select manually on the map.')
         }
       )
     } else {
-      alert('Geolocation is not supported by this browser.')
+      alert(t('owner.geolocationNotSupported') || 'Geolocation is not supported by this browser.')
     }
   }
 
@@ -262,7 +263,8 @@ export default function VenuesPage() {
           uploadedImageUrls = uploadResults.map(result => result.original_file)
         } catch (uploadError) {
           console.error('Error uploading images:', uploadError)
-          alert('Failed to upload images. Please try again.')
+          const translatedError = getErrorMessage(uploadError, language)
+          alert(translatedError || t('owner.imageUploadError'))
           setUploadingImages(false)
           setIsLoading(false)
           return
@@ -347,35 +349,8 @@ export default function VenuesPage() {
       // fetchVenues()
     } catch (error: unknown) {
       console.error('Error creating venue:', error)
-      
-      // Show more specific error message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        alert(t('common.backendConnectionFailed'))
-      } else if (error instanceof Error) {
-        // Check for specific error types
-        if (error.message.includes('Authentication required')) {
-          alert(t('common.authenticationFailed'))
-        } else if (error.message.includes('HTTP error! status: 400')) {
-          alert(t('common.invalidDataProvided'))
-        } else if (error.message.includes('HTTP error! status: 401')) {
-          alert(t('common.authenticationFailed'))
-        } else if (error.message.includes('HTTP error! status: 403')) {
-          alert(t('common.accessDenied'))
-        } else if (error.message.includes('HTTP error! status: 404')) {
-          alert(t('common.apiEndpointNotFound'))
-        } else if (error.message.includes('HTTP error! status: 500')) {
-          alert(t('common.serverError'))
-        } else if (error.message.includes('HTTP error! status: 502')) {
-          alert(t('common.backendServerNotResponding'))
-        } else if (error.message.includes('HTTP error! status: 503')) {
-          alert(t('common.serviceTemporarilyUnavailable'))
-        } else {
-          // Show the actual error message from the server
-          alert(`${t('common.errorCreatingVenue')}: ${error.message}`)
-        }
-      } else {
-        alert(`${t('common.errorCreatingVenue')}: ${String(error)}`)
-      }
+      const translatedError = getErrorMessage(error, language)
+      alert(translatedError || t('common.errorCreatingVenue'))
     } finally {
       setIsLoading(false)
     }

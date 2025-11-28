@@ -3,8 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
 import { apiService } from '../services/apiService'
-import { formatPersianNumber, toPersianNumbers } from '../utils/persianNumbers'
-import { formatEventDate } from '../utils/solarHijriCalendar'
+import { formatNumber, formatDate, formatTime24 } from '../utils/persianNumbers'
 import CartItemCountdown from '../components/CartItemCountdown'
 import type { Event } from '../types/owner'
 
@@ -28,7 +27,7 @@ interface Reservation {
 export default function ReservationsPage() {
   const [searchParams] = useSearchParams()
   const { state } = useAuth()
-  const { t, isRTL } = useLanguage()
+  const { t, isRTL, language } = useLanguage()
   
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [allReservations, setAllReservations] = useState<Reservation[]>([]) // Store all reservations for count calculation
@@ -285,22 +284,23 @@ export default function ReservationsPage() {
     }
   }
 
-  // Format date
-  const formatDate = (dateString: string) => {
+  // Format date - use language-aware formatting
+  const formatDateLocal = (dateString: string) => {
     try {
-      return formatEventDate(dateString)
+      return formatDate(dateString, language)
     } catch {
       return dateString
     }
   }
 
-  // Format time
-  const formatTime = (timeString: string) => {
+  // Format time - use language-aware formatting
+  const formatTimeLocal = (timeString: string) => {
     try {
-      return new Date(timeString).toLocaleTimeString('fa-IR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      if (timeString.includes('T') || timeString.includes('Z')) {
+        const timeDate = new Date(timeString)
+        return formatTime24(timeDate.toTimeString().slice(0, 5), language)
+      }
+      return formatTime24(timeString, language)
     } catch {
       return timeString
     }
@@ -364,35 +364,35 @@ export default function ReservationsPage() {
             className={`p-3 rounded-lg border transition-colors ${selectedStatus === '' ? 'bg-blue-600/20 border-blue-500/40' : 'bg-gray-800 border-gray-700 hover:bg-gray-700/40'}`}
           >
             <div className="text-sm text-gray-300">{t('owner.allStatuses')}</div>
-            <div className="text-lg font-semibold">{statusCounts.all}</div>
+            <div className="text-lg font-semibold">{formatNumber(statusCounts.all, language)}</div>
           </button>
           <button
             onClick={() => setSelectedStatus('pending')}
             className={`p-3 rounded-lg border transition-colors ${selectedStatus === 'pending' ? 'bg-yellow-600/20 border-yellow-500/40' : 'bg-gray-800 border-gray-700 hover:bg-gray-700/40'}`}
           >
             <div className="text-sm text-yellow-300">{t('owner.pendingBookings')}</div>
-            <div className="text-lg font-semibold text-yellow-400">{statusCounts.pending}</div>
+            <div className="text-lg font-semibold text-yellow-400">{formatNumber(statusCounts.pending, language)}</div>
           </button>
           <button
             onClick={() => setSelectedStatus('confirmed')}
             className={`p-3 rounded-lg border transition-colors ${selectedStatus === 'confirmed' ? 'bg-green-600/20 border-green-500/40' : 'bg-gray-800 border-gray-700 hover:bg-gray-700/40'}`}
           >
             <div className="text-sm text-green-300">{t('owner.confirmedBookings')}</div>
-            <div className="text-lg font-semibold text-green-400">{statusCounts.confirmed}</div>
+            <div className="text-lg font-semibold text-green-400">{formatNumber(statusCounts.confirmed, language)}</div>
           </button>
           <button
             onClick={() => setSelectedStatus('cancelled')}
             className={`p-3 rounded-lg border transition-colors ${selectedStatus === 'cancelled' ? 'bg-red-600/20 border-red-500/40' : 'bg-gray-800 border-gray-700 hover:bg-gray-700/40'}`}
           >
             <div className="text-sm text-red-300">{t('owner.cancelledBookings')}</div>
-            <div className="text-lg font-semibold text-red-400">{statusCounts.cancelled}</div>
+            <div className="text-lg font-semibold text-red-400">{formatNumber(statusCounts.cancelled, language)}</div>
           </button>
           <button
             onClick={() => setSelectedStatus('completed')}
             className={`p-3 rounded-lg border transition-colors ${selectedStatus === 'completed' ? 'bg-blue-600/20 border-blue-500/40' : 'bg-gray-800 border-gray-700 hover:bg-gray-700/40'}`}
           >
             <div className="text-sm text-blue-300">{t('common.completed')}</div>
-            <div className="text-lg font-semibold text-blue-400">{statusCounts.completed}</div>
+            <div className="text-lg font-semibold text-blue-400">{formatNumber(statusCounts.completed, language)}</div>
           </button>
         </div>
 
@@ -416,7 +416,7 @@ export default function ReservationsPage() {
             {((selectedStatus === 'pending' || selectedStatus === '') && filteredCartItems.length > 0) && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-yellow-400 mb-4">
-                  {t('owner.pendingCartItems')} ({filteredCartItems.length})
+                  {t('owner.pendingCartItems')} ({formatNumber(filteredCartItems.length, language)})
                 </h3>
                 <div className="space-y-3">
                   {filteredCartItems.map((cartItem) => (
@@ -443,7 +443,7 @@ export default function ReservationsPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
                             <div>
                               <span className="text-gray-400">{t('common.people')}: </span>
-                              {toPersianNumbers(cartItem.number_of_people.toString())}
+                              {formatNumber(cartItem.number_of_people, language)}
                             </div>
                             <div>
                               <span className="text-gray-400">{t('owner.eventName')}: </span>
@@ -455,11 +455,11 @@ export default function ReservationsPage() {
                             </div>
                             <div>
                               <span className="text-gray-400">{t('owner.eventDate')}: </span>
-                              {formatDate(cartItem.event_date)}
+                              {formatDateLocal(cartItem.event_date)}
                             </div>
                             <div>
                               <span className="text-gray-400">{t('owner.eventTime')}: </span>
-                              {formatTime(cartItem.event_time)}
+                              {formatTimeLocal(cartItem.event_time)}
                             </div>
                             {cartItem.expires_at && !cartItem.is_expired && (
                               <div>
@@ -497,7 +497,7 @@ export default function ReservationsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
                       <div>
                         <span className="text-gray-400">{t('common.people')}: </span>
-                        {toPersianNumbers(reservation.number_of_people.toString())}
+                        {formatNumber(reservation.number_of_people, language)}
                       </div>
                       <div>
                         <span className="text-gray-400">{t('owner.eventName')}: </span>
@@ -509,11 +509,11 @@ export default function ReservationsPage() {
                       </div>
                       <div>
                         <span className="text-gray-400">{t('owner.eventDate')}: </span>
-                        {formatDate(reservation.event_date)}
+                        {formatDateLocal(reservation.event_date)}
                       </div>
                       <div>
                         <span className="text-gray-400">{t('owner.eventTime')}: </span>
-                        {formatTime(reservation.event_time)}
+                        {formatTimeLocal(reservation.event_time)}
                       </div>
                     </div>
                   </div>
@@ -524,7 +524,7 @@ export default function ReservationsPage() {
                       {t('owner.reservationDate')}
                     </div>
                     <div className="text-white">
-                      {formatDate(reservation.reservation_date)}
+                      {formatDateLocal(reservation.reservation_date)}
                     </div>
                   </div>
                 </div>

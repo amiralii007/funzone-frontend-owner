@@ -15,6 +15,7 @@ export interface Owner {
   birthday: string
   email: string
   iban?: string
+  credit_number?: string
   venues: Venue[]
   events: Event[]
 }
@@ -96,7 +97,7 @@ export interface Transaction {
   type: 'deposit' | 'withdraw' | 'booking_payment' | 'refund'
   amount: number
   status: 'pending' | 'completed' | 'failed'
-  description: string
+  description: string | null
   created_at: string
   updated_at: string
 }

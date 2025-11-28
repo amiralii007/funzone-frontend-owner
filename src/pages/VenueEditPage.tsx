@@ -12,7 +12,7 @@ import { ImageUploadService } from '../services/imageUploadService'
 export default function VenueEditPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t, isRTL } = useLanguage()
+  const { t, isRTL, language } = useLanguage()
   const { state } = useAuth()
   
   const [venue, setVenue] = useState<Venue | null>(null)
@@ -395,7 +395,7 @@ export default function VenueEditPage() {
                 <input 
                   type="text" 
                   name="postal_code"
-                  value={toPersianNumbers(formData.postal_code)}
+                  value={language === 'fa' ? toPersianNumbers(formData.postal_code) : formData.postal_code}
                   onChange={handleInputChange}
                   className="input-field w-full"
                   placeholder={t('owner.venuePostalCode')}

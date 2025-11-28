@@ -4,6 +4,7 @@ import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
 import BackButton from '../components/BackButton'
 import { toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
+import { getErrorMessage } from '../utils/errorTranslator'
 
 export default function LoginPage() {
   const { state, sendVerificationCode, login, completeProfile, logout } = useAuth()
@@ -33,13 +34,6 @@ export default function LoginPage() {
     state.auth.user.username && 
     state.auth.user.national_code
   ) : false
-
-  // If already authenticated and profile is complete, redirect to dashboard automatically
-  useEffect(() => {
-    if (state.auth.user && isProfileComplete) {
-      navigate('/', { replace: true })
-    }
-  }, [state.auth.user, isProfileComplete, navigate])
 
   // Check if user was redirected due to incomplete profile
   useEffect(() => {
@@ -118,7 +112,8 @@ export default function LoginPage() {
         await sendVerificationCode(formattedPhone)
         setStep('code')
       } catch (error: any) {
-        setError(error.message || t('owner.failedToSendCode'))
+        const translatedError = getErrorMessage(error, language)
+        setError(translatedError || t('owner.failedToSendCode'))
       } finally {
         setLoading(false)
       }
@@ -144,7 +139,8 @@ export default function LoginPage() {
         if (error.message === 'Profile completion required') {
           setStep('profile')
         } else {
-          setError(error.message || t('owner.loginFailed'))
+          const translatedError = getErrorMessage(error, language)
+          setError(translatedError || t('owner.loginFailed'))
         }
       } finally {
         setLoading(false)
@@ -171,7 +167,8 @@ export default function LoginPage() {
       navigate('/')
       setTimeout(() => setShowRatePopup(true), 1000)
     } catch (error: any) {
-      setError(error.message || t('owner.failedToCompleteProfile'))
+      const translatedError = getErrorMessage(error, language)
+      setError(translatedError || t('owner.failedToCompleteProfile'))
     } finally {
       setLoading(false)
     }
@@ -185,8 +182,23 @@ export default function LoginPage() {
   if (state.auth.user) {
     // If profile is complete, show continue button
     if (isProfileComplete) {
-      // We already navigate in useEffect; render null to avoid flicker
-      return null
+      return (
+        <div className={`container-responsive p-responsive space-responsive-compact ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-2xl sm:text-3xl font-bold shadow-glow">
+              {state.auth.user?.f_name?.[0] || '🏢'}
+            </div>
+            <div className="font-semibold text-responsive-lg">{state.auth.user?.f_name || ''} {state.auth.user?.l_name || ''}</div>
+            <div className="text-slate-400 text-responsive-sm">{t('common.alreadyLoggedIn')}</div>
+          </div>
+          <button 
+            className="btn-ghost w-full hover-scale" 
+            onClick={() => navigate('/')}
+          >
+            {t('common.continue')}
+          </button>
+        </div>
+      )
     } else {
       // If profile is incomplete and step is not 'profile', show profile completion button
       if (step !== 'profile') {

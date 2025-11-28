@@ -598,6 +598,53 @@ class ApiService {
     })
   }
 
+  // Reply to a comment (owner's answer)
+  async replyToComment(commentId: string, replyText: string, ownerId: string): Promise<any> {
+    try {
+      // Create a new comment as a reply
+      // The backend will automatically inherit event and social_hub from parent comment
+      // and set the customer from the authenticated owner user
+      const replyData: any = {
+        comment: replyText,
+        parent_comment_id: commentId, // Set parent comment to make this a reply
+      }
+      
+      // Use the standard comment creation endpoint
+      // The backend will handle setting the customer from the authenticated owner
+      // and inherit event/social_hub from parent comment
+      // Invalidate cache for comments, the specific comment, and replies
+      return await this.post('/comments/', replyData, true, [
+        'comments', 
+        `comment_${commentId}`, 
+        'replies',
+        `comment_${commentId}_replies`
+      ])
+    } catch (error: any) {
+      console.error('Error in replyToComment:', error)
+      throw error // Re-throw to let the caller handle it
+    }
+  }
+
+  // Get replies for a comment
+  async getCommentReplies(commentId: string, useCache: boolean = true): Promise<any> {
+    // Try using query parameter on the comments list endpoint
+    // If the backend doesn't support this, it will need a custom /comments/by_parent/ endpoint
+    try {
+      return this.get(`/comments/?parent_comment=${commentId}`, true, {
+        enabled: useCache,
+        ttl: useCache ? 3 * 60 * 1000 : 0, // 3 minutes if caching, 0 if not
+        tags: ['comments', `comment_${commentId}`, 'replies'],
+      })
+    } catch (error) {
+      // Fallback to by_parent endpoint
+      return this.get(`/comments/by_parent/?parent_comment_id=${commentId}`, true, {
+        enabled: useCache,
+        ttl: useCache ? 3 * 60 * 1000 : 0, // 3 minutes if caching, 0 if not
+        tags: ['comments', `comment_${commentId}`, 'replies'],
+      })
+    }
+  }
+
   // Ratings API methods
   async getRatingsByOwner(ownerId: string): Promise<any> {
     return this.get(`/ratings/by_owner/?owner_id=${ownerId}`, true, {
@@ -677,6 +724,55 @@ class ApiService {
       enabled: true,
       ttl: 1 * 60 * 1000, // 1 minute
       tags: ['support', 'support_stats'],
+    })
+  }
+
+  // Wallet API methods
+  async getWalletBalance(): Promise<any> {
+    return this.get('/owners/wallet/balance/', true, {
+      enabled: true,
+      ttl: 1 * 60 * 1000, // 1 minute (balance changes frequently)
+      tags: ['wallet', 'balance'],
+    })
+  }
+
+  async depositToWallet(amount: number, description?: string): Promise<any> {
+    const result = await this.post('/owners/wallet/deposit/', {
+      amount,
+      description: description || 'واریز به کیف پول',
+    }, true, ['wallet', 'balance', 'transactions'])
+    
+    return result
+  }
+
+  async withdrawFromWallet(amount: number, description?: string): Promise<any> {
+    const result = await this.post('/owners/wallet/withdraw/', {
+      amount,
+      description: description || 'برداشت از کیف پول',
+    }, true, ['wallet', 'balance', 'transactions'])
+    
+    return result
+  }
+
+  async getTransactions(type?: string, status?: string, limit?: number): Promise<any> {
+    const params = new URLSearchParams()
+    
+    if (type) {
+      params.append('type', type)
+    }
+    if (status) {
+      params.append('status', status)
+    }
+    if (limit) {
+      params.append('limit', limit.toString())
+    }
+    
+    const endpoint = `/owners/wallet/transactions/${params.toString() ? `?${params.toString()}` : ''}`
+    
+    return this.get(endpoint, true, {
+      enabled: true,
+      ttl: 2 * 60 * 1000, // 2 minutes
+      tags: ['wallet', 'transactions'],
     })
   }
 }
