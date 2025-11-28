@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
-import { formatPersianCurrency, formatNumberWithCommas, parseFormattedNumber, toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
+import { formatCurrency, formatDate, formatNumberWithCommas, parseFormattedNumber, toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
 import type { Transaction } from '../types/owner'
 import { apiService } from '../services/apiService'
 
@@ -34,7 +34,7 @@ export default function WalletPage() {
       }
     } catch (err: any) {
       console.error('Error fetching transactions:', err)
-      setError(err.message || 'خطا در دریافت تراکنش‌ها')
+      setError(err.message || t('owner.errorFetchingTransactions'))
     } finally {
       setIsLoadingTransactions(false)
     }
@@ -59,12 +59,12 @@ export default function WalletPage() {
     const amount = parseFormattedNumber(depositAmount)
     
     if (!depositAmount || amount <= 0) {
-      setError('لطفاً مبلغ معتبری وارد کنید')
+      setError(t('owner.pleaseEnterValidAmount'))
       return
     }
 
     if (amount < 10000) {
-      setError('حداقل مبلغ واریز ۱۰,۰۰۰ تومان است')
+      setError(t('owner.minimumDepositAmount'))
       return
     }
 
@@ -98,7 +98,7 @@ export default function WalletPage() {
       }
     } catch (err: any) {
       console.error('Error depositing:', err)
-      setError(err.message || 'خطا در واریز وجه')
+      setError(err.message || t('owner.errorDepositing'))
     } finally {
       setIsLoading(false)
     }
@@ -110,22 +110,22 @@ export default function WalletPage() {
     const amount = parseFormattedNumber(withdrawAmount)
     
     if (!withdrawAmount || amount <= 0) {
-      setError('لطفاً مبلغ معتبری وارد کنید')
+      setError(t('owner.pleaseEnterValidAmount'))
       return
     }
 
     if (amount < 50000) {
-      setError('حداقل مبلغ برداشت ۵۰,۰۰۰ تومان است')
+      setError(t('owner.minimumWithdrawAmount'))
       return
     }
 
     if (amount > balance) {
-      setError('موجودی کافی نیست')
+      setError(t('owner.insufficientBalanceError'))
       return
     }
 
     if (!hasIban) {
-      setError('برای برداشت، ابتدا شماره شبا (IBAN) خود را در پروفایل ثبت کنید')
+      setError(t('owner.ibanRequiredForWithdraw'))
       return
     }
 
@@ -159,7 +159,7 @@ export default function WalletPage() {
       }
     } catch (err: any) {
       console.error('Error withdrawing:', err)
-      setError(err.message || 'خطا در برداشت وجه')
+      setError(err.message || t('owner.errorWithdrawing'))
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +227,7 @@ export default function WalletPage() {
         </div>
         <div>
           <div className="text-responsive-xl font-bold text-gradient">
-            {formatPersianCurrency(state.auth.user?.balance || 0, t('common.currency'), 0)}
+            {formatCurrency(state.auth.user?.balance || 0, language, t('common.currency'), 0)}
           </div>
           <div className="text-slate-400 text-responsive-sm">{t('owner.balance')}</div>
         </div>
@@ -273,7 +273,7 @@ export default function WalletPage() {
           </div>
         ) : transactions.length === 0 ? (
           <div className="glass-card p-8 text-center">
-            <div className="text-slate-400">{t('owner.noTransactions') || 'تراکنشی یافت نشد'}</div>
+            <div className="text-slate-400">{t('owner.noTransactions')}</div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -290,34 +290,45 @@ export default function WalletPage() {
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold text-responsive-sm">
-                      {transaction.type === 'booking_payment' && 
-                       (transaction.description?.includes('رویداد') || transaction.description?.includes('Payment from event')) ? (
+                      {transaction.type === 'booking_payment' ? (
                         <div className="text-blue-300">
                           {(() => {
                             let desc = transaction.description || ''
-                            // Extract event name from {eventName} format
-                            const match = desc.match(/\{([^}]+)\}/)
+                            // Extract event name from {eventName} format (supports both single and double braces)
+                            const match = desc.match(/\{([^}]+)\}/) || desc.match(/\{\{([^}]+)\}\}/)
                             if (match) {
                               return `💰 ${match[1]}`
                             }
-                            // Fallback: extract from old format
+                            // Fallback: extract from description text
                             const eventName = desc
                               .replace('درآمد از رویداد:', '')
                               .replace('Payment from event:', '')
+                              .replace('درآمد از رویداد', '')
                               .split('(رزرو')[0]
                               .split('(Reservation')[0]
+                              .split('رزرو')[0]
                               .trim()
                             return eventName ? `💰 ${eventName}` : `💰 ${t('owner.paymentFromEvent') || 'درآمد از رویداد'}`
                           })()}
                         </div>
                       ) : transaction.description ? (
-                        transaction.description
+                        (() => {
+                          // Translate common transaction descriptions
+                          const desc = transaction.description
+                          if (desc === 'Deposit to wallet' || desc === 'واریز به کیف پول') {
+                            return t('owner.depositToWallet')
+                          }
+                          if (desc === 'Withdrawal from wallet' || desc === 'برداشت از کیف پول') {
+                            return t('owner.withdrawalFromWallet')
+                          }
+                          return desc
+                        })()
                       ) : (
                         t(`owner.transactionTypes.${transaction.type}`) || transaction.type
                       )}
                     </div>
                     <div className="text-responsive-xs text-slate-400 mt-1">
-                      {new Date(transaction.created_at).toLocaleDateString('fa-IR', {
+                      {formatDate(transaction.created_at, language, {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
@@ -335,7 +346,7 @@ export default function WalletPage() {
                   }`}>
                     {transaction.type === 'deposit' ? '+' : 
                      transaction.type === 'withdraw' ? '-' : '+'}
-                    {formatPersianCurrency(transaction.amount, t('common.currency'), 0)}
+                    {formatCurrency(transaction.amount, language, t('common.currency'), 0)}
                   </div>
                   <div className={`text-responsive-xs ${
                     transaction.status === 'completed' ? 'text-green-400' :
@@ -479,7 +490,7 @@ export default function WalletPage() {
                 disabled={isLoading}
               />
               <div className="text-responsive-xs text-slate-400 mt-1">
-                {t('owner.availableBalance')}: {formatPersianCurrency(state.auth.user?.balance || 0, 'تومان', 0)}
+                {t('owner.availableBalance')}: {formatCurrency(state.auth.user?.balance || 0, language, t('common.currency'), 0)}
               </div>
               <div className="text-responsive-xs text-slate-400 mt-1">
                 {t('owner.minimumWithdraw')}

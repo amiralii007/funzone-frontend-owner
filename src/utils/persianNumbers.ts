@@ -572,13 +572,27 @@ export function formatNumberWithCommas(value: number | string | null | undefined
  * @param value - The formatted string (e.g., "1,000,000")
  * @returns The numeric value or 0 if invalid
  */
+/**
+ * Parses a formatted number string (with commas) back to a number
+ * Handles both English and Persian digits, and both comma types
+ * @param value - The formatted string (e.g., "1,000,000" or "۱،۰۰۰،۰۰۰")
+ * @returns The numeric value or 0 if invalid
+ */
 export function parseFormattedNumber(value: string): number {
   if (!value || value === '') {
     return 0;
   }
   
-  // Remove all commas and parse
-  const cleaned = value.replace(/,/g, '');
+  // First convert Persian digits to English
+  let cleaned = toEnglishNumbers(value);
+  
+  // Remove all commas (both English , and Persian ،)
+  cleaned = cleaned.replace(/,/g, '').replace(/،/g, '');
+  
+  // Remove any other non-digit characters
+  cleaned = cleaned.replace(/[^\d]/g, '');
+  
+  // Parse as integer
   const parsed = parseInt(cleaned, 10);
   
   return isNaN(parsed) ? 0 : parsed;
