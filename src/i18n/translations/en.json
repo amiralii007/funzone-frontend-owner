@@ -613,7 +613,10 @@
     "eventCancelled": "Event Cancelled - Minimum seats not reached",
     "ticketSalesClosed": "Ticket sales closed - Event cancelled due to insufficient participants",
     "ticketSalesClosedSuccess": "Ticket sales closed - Event completed successfully",
-    "ticketSalesWillClose": "Ticket sales will close {hours} hours before event"
+    "ticketSalesWillClose": "Ticket sales will close {hours} hours before event",
+    "startTimeInPast": "Start time is in the past",
+    "invalidTimeCalculation": "Invalid time calculation",
+    "invalidTimeFormat": "Invalid time format"
   },
   "validation": {
     "firstNameRequired": "First name is required",

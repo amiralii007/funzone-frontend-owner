@@ -13,6 +13,7 @@ import { getEventStatusColorClass, getEventStatusTextColorClass, shouldShowEvent
 import Timer from '../components/Timer'
 import type { Event } from '../types/owner'
 import { ImageUploadService } from '../services/imageUploadService'
+import { getErrorMessage } from '../utils/errorTranslator'
 
 export default function EventsPage() {
   const [searchParams] = useSearchParams()
@@ -339,11 +340,8 @@ export default function EventsPage() {
       setEvents([])
       
       // Show more specific error message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        alert('Backend connection failed. Please check if Django server is running on port 8000.')
-      } else {
-        alert(`Error loading events: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      }
+      const translatedError = getErrorMessage(error, language)
+      alert(translatedError || t('owner.errorLoadingEvents'))
     } finally {
       setIsLoadingEvents(false)
     }
@@ -552,7 +550,8 @@ export default function EventsPage() {
       
     } catch (error) {
       console.error('Error deleting event:', error)
-      alert(`Error deleting event: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const translatedError = getErrorMessage(error, language)
+      alert(translatedError || t('owner.errorDeletingEvent'))
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
@@ -588,7 +587,8 @@ export default function EventsPage() {
           uploadedImageUrls = uploadResults.map(result => result.original_file)
         } catch (uploadError) {
           console.error('Error uploading images:', uploadError)
-          alert('Failed to upload images. Please try again.')
+          const translatedError = getErrorMessage(uploadError, language)
+          alert(translatedError || t('owner.imageUploadError'))
           setUploadingImages(false)
           setIsLoading(false)
           return
@@ -666,13 +666,8 @@ export default function EventsPage() {
       
     } catch (error) {
       console.error('Error creating event:', error)
-      
-      // Show more specific error message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        alert('Backend connection failed. Please check if Django server is running on port 8000.')
-      } else {
-        alert(`Error creating event: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      }
+      const translatedError = getErrorMessage(error, language)
+      alert(translatedError || t('owner.errorCreatingEvent'))
     } finally {
       setIsLoading(false)
     }
@@ -729,7 +724,7 @@ export default function EventsPage() {
     
     // Validate social hub selection
     if (!formData.social_hub) {
-      alert('Please select a venue for the event')
+      alert(t('owner.pleaseSelectVenue') || 'Please select a venue for the event')
       setIsLoading(false)
       return
     }
@@ -737,7 +732,7 @@ export default function EventsPage() {
     // Additional validation: check if selected social hub exists
     const selectedHub = socialHubs.find(hub => hub.id == formData.social_hub)
     if (!selectedHub) {
-      alert('Selected venue is not valid. Please select a different venue.')
+      alert(t('owner.selectedVenueInvalid') || 'Selected venue is not valid. Please select a different venue.')
       setIsLoading(false)
       return
     }
@@ -755,7 +750,7 @@ export default function EventsPage() {
       
       // Ensure we have a valid duration
       if (isNaN(durationHours) || durationHours <= 0) {
-        alert('Please select a valid duration')
+        alert(t('owner.pleaseSelectValidDuration') || 'Please select a valid duration')
         setIsLoading(false)
         return
       }
@@ -763,7 +758,7 @@ export default function EventsPage() {
       // Validate that the start time is not in the past
       const now = new Date()
       if (startTime < now) {
-        alert('Event start time cannot be in the past. Please select a future date and time.')
+        alert(t('owner.eventStartTimeCannotBePast') || 'Event start time cannot be in the past. Please select a future date and time.')
         setIsLoading(false)
         return
       }
@@ -772,7 +767,7 @@ export default function EventsPage() {
       
       // Double check that end time is after start time
       if (endTime <= startTime) {
-        alert('End time must be after start time. Please check your duration selection.')
+        alert(t('owner.endTimeMustBeAfterStartTime') || 'End time must be after start time. Please check your duration selection.')
         setIsLoading(false)
         return
       }
@@ -796,7 +791,7 @@ export default function EventsPage() {
       // Use the selected category ID directly
       const selectedCategory = eventCategories.find(cat => cat.id === formData.category.trim())
       if (!selectedCategory) {
-        alert('Please select a valid category')
+        alert(t('owner.pleaseSelectValidCategory') || 'Please select a valid category')
         setIsLoading(false)
         return
       }
@@ -849,13 +844,8 @@ export default function EventsPage() {
       
     } catch (error) {
       console.error('Error in event creation process:', error)
-      
-      // Show more specific error message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        alert('Backend connection failed. Please check if Django server is running on port 8000.')
-      } else {
-        alert(`Error creating event: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      }
+      const translatedError = getErrorMessage(error, language)
+      alert(translatedError || t('owner.errorCreatingEvent'))
       // Reset loading state on error
       setIsLoading(false)
     }
@@ -1389,14 +1379,14 @@ export default function EventsPage() {
                           
                           // Check for validation issues
                           if (startTime < now) {
-                            return <span className="text-red-400">⚠️ Start time is in the past</span>
+                            return <span className="text-red-400">⚠️ {t('owner.startTimeInPast')}</span>
                           } else if (endTime <= startTime) {
-                            return <span className="text-red-400">⚠️ Invalid time calculation</span>
+                            return <span className="text-red-400">⚠️ {t('owner.invalidTimeCalculation')}</span>
                           } else {
                             return <span className="text-green-400">✓ {language === 'fa' ? `رویداد در ساعت ${endTimeString} به پایان می‌رسد` : t('owner.eventEndsAt', { time: endTimeString })}</span>
                           }
                         } catch (e) {
-                          return <span className="text-red-400">⚠️ Invalid time format</span>
+                          return <span className="text-red-400">⚠️ {t('owner.invalidTimeFormat')}</span>
                         }
                       })()}
                     </div>

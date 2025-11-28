@@ -2,7 +2,6 @@ import { createContext, useContext, useReducer, useCallback, useRef } from 'reac
 import type { Owner, AppState } from '../types/owner'
 import type { ReactNode } from 'react'
 import { API_CONFIG } from '../config/api'
-import { apiService } from '../services/apiService'
 
 // Action types
 type AuthAction =
@@ -348,8 +347,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     iban?: string
   }): Promise<void> => {
     try {
-      // Use apiService to benefit from automatic refresh-token handling
-      const updatedOwner = await apiService.post('/owners/auth/update-profile/', profileData, true)
+      const response = await authenticatedFetch(`${API_CONFIG.API_BASE_URL}/owners/auth/update-profile/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update profile')
+      }
+
+      const updatedOwner = await response.json()
       dispatch({ type: 'UPDATE_OWNER', owner: updatedOwner })
     } catch (error) {
       console.error('Update profile error:', error)

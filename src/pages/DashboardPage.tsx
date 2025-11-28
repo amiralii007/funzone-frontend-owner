@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
-import { formatNumber, formatCurrency, formatDate } from '../utils/persianNumbers'
+import { formatNumber, formatCurrency, formatDate, formatPersianNumber } from '../utils/persianNumbers'
 import { apiService } from '../services/apiService'
 
 export default function DashboardPage() {
@@ -40,9 +40,7 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<any[]>([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(false)
   
-  // State for top events by rating (رویدادهای برتر)
-  const [topEvents, setTopEvents] = useState<any[]>([])
-  const [isLoadingTopEvents, setIsLoadingTopEvents] = useState(false)
+  // Top events will be computed from events that have ratings
   
   // State for comments
   const [comments, setComments] = useState<any[]>([])
@@ -105,22 +103,20 @@ export default function DashboardPage() {
     }
   }
 
-  // Fetch top events by rating (رویدادهای برتر)
-  const fetchTopEvents = async () => {
-    if (!state.auth.user?.id) return
-    
-    setIsLoadingTopEvents(true)
-    try {
-      const topEventsData = await apiService.getTopEventsByRating(state.auth.user.id, 10)
-      setTopEvents(topEventsData)
-      console.log('Fetched top events by rating:', topEventsData.length)
-      console.log('Top events data:', topEventsData)
-    } catch (error) {
-      console.error('Error fetching top events:', error)
-      setTopEvents([])
-    } finally {
-      setIsLoadingTopEvents(false)
-    }
+  // Get top events by rating (رویدادهای برتر) - events that have been rated, sorted by average rating
+  const getTopEventsByRating = () => {
+    return events
+      .filter(event => event.average_rating && event.average_rating > 0)
+      .sort((a, b) => {
+        // Sort by average_rating descending
+        if (a.average_rating && b.average_rating) {
+          return b.average_rating - a.average_rating
+        }
+        // If only one has rating, prioritize it
+        if (a.average_rating && !b.average_rating) return -1
+        if (!a.average_rating && b.average_rating) return 1
+        return 0
+      })
   }
 
   // Fetch comments and ratings
@@ -339,7 +335,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchVenues()
     fetchEvents()
-    fetchTopEvents()
     fetchComments()
   }, [state.auth.user])
 
@@ -540,51 +535,61 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Top Events by Rating (رویدادهای برتر) - Show all events with ratings */}
-      {topEvents.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-responsive-lg font-semibold">{language === 'fa' ? 'رویدادهای برتر' : 'Top Events'}</h2>
-            <Link 
-              to="/events" 
-              className="text-teal-400 hover:text-teal-300 text-responsive-sm font-medium transition-colors"
-            >
-              {t('common.seeMore')}
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {topEvents.slice(0, 3).map((event, index) => (
-              <div key={event.id} className="glass-card p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-teal-500 to-blue-500 grid place-items-center text-white font-bold text-sm">
-                    {index + 1}
+      {/* Top Events by Rating (رویدادهای برتر) - Show events that have been rated, sorted by rating */}
+      {(() => {
+        const topRatedEvents = getTopEventsByRating()
+        return topRatedEvents.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-responsive-lg font-semibold">{language === 'fa' ? 'رویدادهای برتر' : 'Top Events'}</h2>
+              <Link 
+                to="/events" 
+                className="text-teal-400 hover:text-teal-300 text-responsive-sm font-medium transition-colors"
+              >
+                {t('common.seeMore')}
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {topRatedEvents.slice(0, 3).map((event, index) => (
+                <div key={event.id} className="glass-card p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-teal-500 to-blue-500 grid place-items-center text-white font-bold text-sm">
+                      {formatNumber(index + 1, language)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-responsive-sm">{event.name}</div>
+                      <div className="text-responsive-xs text-slate-400">{formatDate(event.start_time, language)}</div>
+                      <div className="text-responsive-xs text-slate-500">{event.social_hub?.name}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-semibold text-responsive-sm">{event.name}</div>
-                    <div className="text-responsive-xs text-slate-400">{formatDate(event.start_time, language)}</div>
-                    <div className="text-responsive-xs text-slate-500">{event.social_hub?.name}</div>
+                  <div className="text-right">
+                    {event.average_rating && event.average_rating > 0 ? (
+                      <>
+                        <div className="flex items-center gap-1 justify-end mb-1">
+                          {[...Array(Math.round(event.average_rating))].map((_, i) => (
+                            <span key={i} className="text-sm text-yellow-400">
+                              ⭐
+                            </span>
+                          ))}
+                        </div>
+                        <div className="font-bold text-responsive-sm text-yellow-400">{formatNumber(event.average_rating, language, 1)}</div>
+                        <div className="text-responsive-xs text-slate-400">
+                          {event.ratings_count > 0 ? `${formatNumber(event.ratings_count, language)} ${language === 'fa' ? 'نظر' : 'ratings'}` : t('owner.rating')}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-bold text-responsive-sm text-slate-400">{t('owner.noRating') || 'No rating'}</div>
+                        <div className="text-responsive-xs text-slate-400">{t('owner.noRatingsYet') || 'No ratings yet'}</div>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="text-right">
-                  {event.average_rating && event.average_rating > 0 ? (
-                    <>
-                      <div className="font-bold text-responsive-sm text-yellow-400">{formatNumber(event.average_rating, language, 1)} ⭐</div>
-                      <div className="text-responsive-xs text-slate-400">
-                        {event.ratings_count > 0 ? `${formatNumber(event.ratings_count, language)}` : t('owner.rating')}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="font-bold text-responsive-sm text-slate-400">{t('owner.noRating') || 'No rating'}</div>
-                      <div className="text-responsive-xs text-slate-400">{t('owner.noRatingsYet') || 'No ratings yet'}</div>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Recent Comments - Only show if comments exist */}
       {comments.length > 0 && (
@@ -617,27 +622,29 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  {comment.rating && (
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className={`text-sm ${i < comment.rating ? 'text-yellow-400' : 'text-slate-600'}`}>
-                          ⭐
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-responsive-xs text-slate-400">{comment.date}</span>
                 </div>
-                {comment.comment && (
-                  <p className="text-responsive-sm text-slate-300 leading-relaxed">{comment.comment}</p>
+                {(comment.comment || comment.rating) && (
+                  <div className="text-responsive-sm text-slate-300 leading-relaxed bg-slate-800/50 p-3 rounded-lg space-y-2">
+                    {comment.rating && (
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className={`text-sm ${i < comment.rating ? 'text-yellow-400' : 'text-slate-600'}`}>
+                            ⭐
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {comment.comment && (
+                      <p>{comment.comment}</p>
+                    )}
+                  </div>
                 )}
-                {comment.rating && !comment.comment && (
-                  <p className="text-responsive-sm text-slate-300 leading-relaxed">
-                    امتیاز: {formatPersianNumber(comment.rating)} ستاره
-                  </p>
-                )}
-                <div className="flex items-center justify-between text-responsive-xs text-slate-400">
-                  <span>{comment.date}</span>
-                  <button className="text-purple-400 hover:text-purple-300 transition-colors">
+                <div className="flex items-center justify-end text-responsive-xs text-slate-400">
+                  <button 
+                    onClick={() => navigate(`/comments?commentId=${comment.id}`)}
+                    className="text-purple-400 hover:text-purple-300 transition-colors"
+                  >
                     {t('owner.replyToComment')}
                   </button>
                 </div>

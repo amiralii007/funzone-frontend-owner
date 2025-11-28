@@ -44,7 +44,9 @@ export function toEnglishNumbers(text: string): string {
  * @returns Formatted string with Persian digits and currency
  */
 export function formatPersianCurrency(amount: number, currency: string = 'تومان', decimals: number = 0): string {
-  const formattedAmount = amount.toFixed(decimals);
+  // Round to integer if decimals is 0
+  const roundedAmount = decimals === 0 ? Math.round(amount) : amount;
+  const formattedAmount = roundedAmount.toFixed(decimals);
   const persianAmount = toPersianNumbers(formattedAmount);
   
   // Add thousand separators for Persian digits
@@ -53,6 +55,11 @@ export function formatPersianCurrency(amount: number, currency: string = 'توم
   parts[0] = parts[0].replace(/\B(?=([۰-۹]{3})+(?![۰-۹]))/g, '،');
   // Remove any leading or trailing commas
   parts[0] = parts[0].replace(/^،+|،+$/g, '');
+  
+  // If decimals is 0, only return the integer part (no decimal point)
+  if (decimals === 0) {
+    return `${parts[0]} ${currency}`;
+  }
   
   return `${parts.join('.')} ${currency}`;
 }
@@ -233,7 +240,9 @@ export function formatCurrency(amount: number | undefined | null, language: Lang
     return language === 'fa' ? `۰ ${currency}` : `0 ${currency}`;
   }
   
-  const formattedAmount = amount.toFixed(decimals);
+  // Round to integer if decimals is 0
+  const roundedAmount = decimals === 0 ? Math.round(amount) : amount;
+  const formattedAmount = roundedAmount.toFixed(decimals);
   
   if (language === 'fa') {
     // Use Persian formatting
@@ -243,6 +252,12 @@ export function formatCurrency(amount: number | undefined | null, language: Lang
     parts[0] = parts[0].replace(/\B(?=([۰-۹]{3})+(?![۰-۹]))/g, '،');
     // Remove any leading or trailing commas
     parts[0] = parts[0].replace(/^،+|،+$/g, '');
+    
+    // If decimals is 0, only return the integer part (no decimal point)
+    if (decimals === 0) {
+      return `${parts[0]} ${currency}`;
+    }
+    
     return `${parts.join('.')} ${currency}`;
   } else {
     // Use English formatting
@@ -250,6 +265,12 @@ export function formatCurrency(amount: number | undefined | null, language: Lang
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     // Remove any leading or trailing commas
     parts[0] = parts[0].replace(/^,+|,+$/g, '');
+    
+    // If decimals is 0, only return the integer part (no decimal point)
+    if (decimals === 0) {
+      return `${parts[0]} ${currency}`;
+    }
+    
     return `${parts.join('.')} ${currency}`;
   }
 }
