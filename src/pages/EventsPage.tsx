@@ -1638,7 +1638,33 @@ export default function EventsPage() {
                 <div className="mt-3 p-3 bg-slate-800/50 rounded-lg">
                   <p className="text-white font-medium">{eventToDelete.name}</p>
                   <p className="text-slate-400 text-xs mt-1">
-                    {eventToDelete.date} - {eventToDelete.time}
+                    {(() => {
+                      let formattedDate = ''
+                      if (eventToDelete.date) {
+                        formattedDate = formatDate(eventToDelete.date, language, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      }
+                      let formattedTime = ''
+                      if (eventToDelete.time) {
+                        if (eventToDelete.time.includes('T') || eventToDelete.time.includes('Z')) {
+                          const timeDate = new Date(eventToDelete.time)
+                          formattedTime = formatTime24(timeDate.toTimeString().slice(0, 5), language)
+                        } else if (eventToDelete.time.includes(' - ')) {
+                          const [startTime, endTime] = eventToDelete.time.split(' - ')
+                          const formattedStart = formatTime24(startTime.trim(), language)
+                          const formattedEnd = formatTime24(endTime.trim(), language)
+                          formattedTime = `${formattedStart} - ${formattedEnd}`
+                        } else {
+                          formattedTime = formatTime24(eventToDelete.time, language)
+                        }
+                      }
+                      return formattedDate && formattedTime
+                        ? `${formattedDate} - ${formattedTime}`
+                        : formattedDate || formattedTime || `${eventToDelete.date} - ${eventToDelete.time}`
+                    })()}
                   </p>
                 </div>
               )}

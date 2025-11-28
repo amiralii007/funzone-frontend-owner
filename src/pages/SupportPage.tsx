@@ -4,6 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../state/authStore'
 import BackButton from '../components/BackButton'
 import { apiService } from '../services/apiService'
+import { formatDate, formatTime24 } from '../utils/persianNumbers'
 
 interface SupportTicket {
   id: string
@@ -19,7 +20,7 @@ interface SupportTicket {
 }
 
 export default function SupportPage() {
-  const { t, isRTL } = useLanguage()
+  const { t, isRTL, language } = useLanguage()
   const { state } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'contact' | 'tickets' | 'create'>('contact')
@@ -244,14 +245,19 @@ export default function SupportPage() {
     setShowTicketDetails(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fa-IR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const formatDateLocal = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      const formattedDate = formatDate(date, language, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+      const formattedTime = formatTime24(date.toTimeString().slice(0, 5), language)
+      return `${formattedDate} ${formattedTime}`
+    } catch {
+      return dateString
+    }
   }
 
   return (
@@ -441,7 +447,7 @@ export default function SupportPage() {
                     </p>
                     <div className="flex items-center gap-4 text-responsive-xs text-slate-500">
                       <span>📁 {ticket.category}</span>
-                      <span>📅 {formatDate(ticket.created_at)}</span>
+                      <span>📅 {formatDateLocal(ticket.created_at)}</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -667,7 +673,7 @@ export default function SupportPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-500">📅</span>
-                    <span className="text-slate-300">{formatDate(selectedTicket.created_at)}</span>
+                    <span className="text-slate-300">{formatDateLocal(selectedTicket.created_at)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`chip text-xs ${getStatusColor(selectedTicket.status)}`}>
@@ -703,7 +709,7 @@ export default function SupportPage() {
                           {comment.is_admin ? (t('support.supportTeam') || 'Support Team') : (comment.author_name || 'User')}
                         </span>
                         <span className="text-xs text-slate-500">
-                          {formatDate(comment.created_at)}
+                          {formatDateLocal(comment.created_at)}
                         </span>
                         {comment.is_admin ? (
                           <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
