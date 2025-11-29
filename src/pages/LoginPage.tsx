@@ -23,6 +23,7 @@ export default function LoginPage() {
     nationalCode: ''
   })
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [userExists, setUserExists] = useState(false)
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -91,12 +92,6 @@ export default function LoginPage() {
 
   async function sendCode() {
     if (phone.length >= 10) {
-      // Check if terms are accepted
-      if (!acceptTerms) {
-        setError('لطفاً قوانین و مقررات فان زون را بپذیرید')
-        return
-      }
-      
       setLoading(true)
       setError('')
       try {
@@ -109,8 +104,14 @@ export default function LoginPage() {
           return
         }
         
-        await sendVerificationCode(formattedPhone)
+        const response = await sendVerificationCode(formattedPhone)
+        // Check if response contains user_exists information
+        if (response && typeof response.user_exists === 'boolean') {
+          setUserExists(response.user_exists)
+        }
         setStep('code')
+        // Reset terms acceptance when moving to code step
+        setAcceptTerms(false)
       } catch (error: any) {
         const translatedError = getErrorMessage(error, language)
         setError(translatedError || t('owner.failedToSendCode'))
@@ -122,6 +123,12 @@ export default function LoginPage() {
 
   async function verifyCode() {
     if (code.length === 4) {
+      // Check if terms are accepted for new users
+      if (!userExists && !acceptTerms) {
+        setError('لطفاً قوانین و مقررات فان زون را بپذیرید')
+        return
+      }
+      
       setLoading(true)
       setError('')
       try {
@@ -392,23 +399,9 @@ export default function LoginPage() {
               </p>
             </div>
             
-            {/* Terms and Conditions Checkbox */}
-            <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <input
-                type="checkbox"
-                id="terms-checkbox"
-                checked={acceptTerms}
-                onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500 focus:ring-2"
-              />
-              <label htmlFor="terms-checkbox" className="text-sm text-slate-300 cursor-pointer">
-                {t('owner.acceptTerms')}
-              </label>
-            </div>
-            
             <button
               onClick={sendCode}
-              disabled={phone.length < 10 || loading || !acceptTerms}
+              disabled={phone.length < 10 || loading}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed hover-scale"
             >
               {loading ? t('owner.sending') : t('common.sendCode')}
@@ -443,9 +436,26 @@ export default function LoginPage() {
                 }
               </p>
             </div>
+            
+            {/* Terms and Conditions Checkbox - Only show if user doesn't exist */}
+            {!userExists && (
+              <div className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                <input
+                  type="checkbox"
+                  id="terms-checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-purple-600 bg-slate-700 border-slate-600 rounded focus:ring-purple-500 focus:ring-2"
+                />
+                <label htmlFor="terms-checkbox" className="text-sm text-slate-300 cursor-pointer">
+                  {t('owner.acceptTerms')}
+                </label>
+              </div>
+            )}
+            
             <button
               onClick={verifyCode}
-              disabled={code.length !== 4 || loading}
+              disabled={code.length !== 4 || loading || (!userExists && !acceptTerms)}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed hover-scale"
             >
               {loading ? t('owner.verifying') : t('common.continue')}

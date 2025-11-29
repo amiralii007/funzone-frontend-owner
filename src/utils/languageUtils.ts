@@ -59,7 +59,7 @@ export const detectUserLanguage = (storageKey: string = 'owner-app-language'): L
   }
 
   // Default fallback
-  return 'en'
+  return 'fa'
 }
 
 /**
