@@ -88,6 +88,12 @@ export default function SupportPage() {
     { value: 'Feature Request', label: t('support.categoryFeatureRequest') },
     { value: 'Other', label: t('support.categoryOther') }
   ]
+
+  // Helper function to get translated category label
+  const getCategoryLabel = (categoryValue: string) => {
+    const category = categories.find(cat => cat.value === categoryValue)
+    return category ? category.label : categoryValue
+  }
   const priorities = [
     { value: 'low', label: t('support.priorityLow'), color: 'text-green-400' },
     { value: 'medium', label: t('support.priorityMedium'), color: 'text-yellow-400' },
@@ -446,7 +452,7 @@ export default function SupportPage() {
                       {ticket.description}
                     </p>
                     <div className="flex items-center gap-4 text-responsive-xs text-slate-500">
-                      <span>📁 {ticket.category}</span>
+                      <span>📁 {getCategoryLabel(ticket.category)}</span>
                       <span>📅 {formatDateLocal(ticket.created_at)}</span>
                     </div>
                   </div>

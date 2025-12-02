@@ -32,7 +32,7 @@ export default function EventsPage() {
   // Filter state
   const [filters, setFilters] = useState({
     category: '',
-    timeFilter: 'all', // 'all', 'future', 'current', 'past'
+    venueFilter: '', // Venue ID filter
     statusFilter: 'all' // 'all', 'completed', 'cancelled', 'upcoming'
   })
   const [showFilters, setShowFilters] = useState(false)
@@ -162,11 +162,11 @@ export default function EventsPage() {
       }
     }
 
-    // Filter by time
-    if (filters.timeFilter !== 'all') {
+    // Filter by venue
+    if (filters.venueFilter) {
       filteredEvents = filteredEvents.filter(event => {
-        const timeStatus = getEventTimeStatus(event)
-        return timeStatus === filters.timeFilter
+        return event.venue_id === filters.venueFilter || 
+               String(event.venue_id) === String(filters.venueFilter)
       })
     }
 
@@ -184,7 +184,7 @@ export default function EventsPage() {
   const getActiveFiltersCount = () => {
     let count = 0
     if (filters.category) count++
-    if (filters.timeFilter !== 'all') count++
+    if (filters.venueFilter) count++
     if (filters.statusFilter !== 'all') count++
     return count
   }
@@ -193,7 +193,7 @@ export default function EventsPage() {
   const clearFilters = () => {
     setFilters({
       category: '',
-      timeFilter: 'all',
+      venueFilter: '',
       statusFilter: 'all'
     })
   }
@@ -951,20 +951,23 @@ export default function EventsPage() {
               </select>
             </div>
 
-            {/* Time Filter */}
+            {/* Venue Filter */}
             <div>
               <label className="text-responsive-sm font-medium text-slate-300 mb-2 block">
-                {t('owner.filterByTime')}
+                {t('owner.filterByVenue')}
               </label>
               <select 
                 className="input-field w-full"
-                value={filters.timeFilter}
-                onChange={(e) => setFilters(prev => ({ ...prev, timeFilter: e.target.value }))}
+                value={filters.venueFilter}
+                onChange={(e) => setFilters(prev => ({ ...prev, venueFilter: e.target.value }))}
+                disabled={isLoadingSocialHubs}
               >
-                <option value="all">{t('owner.allEvents')}</option>
-                <option value="future">{t('owner.futureEvents')}</option>
-                <option value="current">{t('owner.currentEvents')}</option>
-                <option value="past">{t('owner.pastEvents')}</option>
+                <option value="">{t('owner.allVenues')}</option>
+                {socialHubs.map((hub) => (
+                  <option key={hub.id} value={hub.id}>
+                    {hub.name} - {hub.address}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -996,9 +999,9 @@ export default function EventsPage() {
                 {eventCategories.find(cat => cat.id === filters.category)?.name ? translateCategoryName(eventCategories.find(cat => cat.id === filters.category)!.name) : filters.category}
               </span>
             )}
-            {filters.timeFilter !== 'all' && (
+            {filters.venueFilter && (
               <span className="chip bg-green-500/20 text-green-400 text-xs">
-                {t(`owner.${filters.timeFilter}Events`)}
+                {socialHubs.find(hub => hub.id === filters.venueFilter)?.name || filters.venueFilter}
               </span>
             )}
             {filters.statusFilter !== 'all' && (
