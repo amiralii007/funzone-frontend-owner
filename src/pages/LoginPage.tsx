@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
 import BackButton from '../components/BackButton'
+import ScrollToTop from '../components/ScrollToTop'
 import { toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
 import { getErrorMessage } from '../utils/errorTranslator'
 
@@ -260,6 +261,7 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isRTL ? 'rtl' : 'ltr'}`}>
+      <ScrollToTop />
       {/* Header */}
       <div className="hero-gradient p-6 sm:p-8 text-center relative overflow-hidden">
         <div className="absolute top-4 left-4 z-20">

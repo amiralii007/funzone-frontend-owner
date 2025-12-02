@@ -16,6 +16,7 @@ import ReservationsPage from './pages/ReservationsPage'
 import LoginPage from './pages/LoginPage'
 import AuthGuard from './components/AuthGuard'
 import ProfileCompletionGuard from './components/ProfileCompletionGuard'
+import ScrollRestoration from './components/ScrollRestoration'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { AuthProvider } from './state/authStore'
 
@@ -23,11 +24,14 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <AuthGuard>
-        <ProfileCompletionGuard>
-          <AppLayout />
-        </ProfileCompletionGuard>
-      </AuthGuard>
+      <>
+        <ScrollRestoration />
+        <AuthGuard>
+          <ProfileCompletionGuard>
+            <AppLayout />
+          </ProfileCompletionGuard>
+        </AuthGuard>
+      </>
     ),
     children: [
       { index: true, element: <DashboardPage /> },
@@ -45,7 +49,12 @@ const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <>
+        <ScrollRestoration />
+        <LoginPage />
+      </>
+    ),
   },
 ])
 

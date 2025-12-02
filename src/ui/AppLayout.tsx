@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useState } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
+import ScrollToTop from '../components/ScrollToTop'
 // import { useAuth } from '../state/authStore' // Unused for now
 
 function TabLink({ to, label, icon }: { to: string; label: string; icon: string }) {
@@ -96,6 +97,7 @@ export default function AppLayout() {
   
   return (
     <div className={`min-h-dvh w-full relative flex flex-col ${isRTL ? 'rtl' : 'ltr'}`}>
+      <ScrollToTop />
       {/* Header */}
       <header className="px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-5 pb-2 sm:pb-3 sticky top-0 z-20">
         <div className="glass-card px-3 sm:px-4 md:px-6 py-2 sm:py-3 flex items-center justify-between">
