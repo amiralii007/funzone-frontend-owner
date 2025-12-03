@@ -20,8 +20,11 @@ export default function ProfilePage() {
     email: '',
     mobile_number: '',
     iban: '',
-    birthday: ''
+    birthday: '',
+    avatar: ''
   })
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false)
+  const availableAvatars = ['avatar1.jpg', 'avatar2.jpg', 'avatar3.jpg', 'avatar4.jpg']
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   
@@ -182,7 +185,8 @@ export default function ProfilePage() {
       email: state.auth.user?.email || '',
       mobile_number: currentPhone,
       iban: state.auth.user?.iban || '',
-      birthday: state.auth.user?.birthday || ''
+      birthday: state.auth.user?.birthday || '',
+      avatar: state.auth.user?.avatar || ''
     })
     setOriginalPhoneNumber(currentPhone)
     setShowEditForm(true)
@@ -251,6 +255,9 @@ export default function ProfilePage() {
         profileData.credit_number = formData.iban.trim()
       }
       
+      // Include avatar (allow empty string to clear it)
+      profileData.avatar = formData.avatar.trim() || null
+      
       const updatedOwner = await authService.updateProfile(profileData)
       
       // Map credit_number to iban for frontend compatibility
@@ -262,6 +269,12 @@ export default function ProfilePage() {
       if (updateOwner) {
         updateOwner(updatedOwner)
       }
+      
+      // Update formData with the returned avatar
+      setFormData(prev => ({
+        ...prev,
+        avatar: updatedOwner.avatar || ''
+      }))
       
       setShowEditForm(false)
       // Show success message
@@ -303,11 +316,31 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={`container-responsive p-responsive space-responsive ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`container-responsive p-responsive space-responsive pb-20 sm:pb-24 md:pb-28 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Profile Header */}
       <div className="glass-card p-4 sm:p-6 text-center space-y-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-2xl sm:text-3xl font-bold shadow-glow">
-          {state.auth.user.f_name ? state.auth.user.f_name[0] : '👤'}
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-2xl sm:text-3xl font-bold shadow-glow overflow-hidden">
+          {state.auth.user.avatar ? (
+            <img 
+              src={`/avatars/${state.auth.user.avatar}`} 
+              alt="Profile" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initial if image fails to load
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                const parent = target.parentElement
+                if (parent) {
+                  const fallback = document.createElement('span')
+                  fallback.className = 'text-2xl sm:text-3xl'
+                  fallback.textContent = state.auth.user.f_name ? state.auth.user.f_name[0] : '👤'
+                  parent.appendChild(fallback)
+                }
+              }}
+            />
+          ) : (
+            <span>{state.auth.user.f_name ? state.auth.user.f_name[0] : '👤'}</span>
+          )}
         </div>
         <div>
           <h1 className="text-responsive-xl font-bold text-gradient">
@@ -411,32 +444,91 @@ export default function ProfilePage() {
       </div>
 
       {/* Logout Button */}
-      <button 
-        onClick={() => setShowLogoutConfirm(true)}
-        className="w-full btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10"
-      >
-        {t('common.logout')}
-      </button>
+      <div className="mt-4 mb-20 sm:mb-24 md:mb-28 pb-4">
+        <button 
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10 py-3"
+        >
+          {t('common.logout')}
+        </button>
+      </div>
 
       {/* Edit Profile Form Modal */}
       {showEditForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-          <div className="glass-card p-4 sm:p-6 max-w-2xl w-full space-y-4 animate-scale-in my-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-responsive-lg font-bold">{t('owner.editProfile')}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 z-50 overflow-y-auto">
+          <div className="glass-card p-3 sm:p-4 md:p-6 max-w-2xl w-full space-y-3 sm:space-y-4 animate-scale-in my-2 sm:my-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between sticky top-0 bg-slate-800/95 backdrop-blur-sm z-10 -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 py-2 sm:py-3 border-b border-slate-700/50">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold">{t('owner.editProfile')}</h2>
               <button 
                 onClick={() => setShowEditForm(false)}
-                className="text-slate-400 hover:text-slate-200"
+                className="text-slate-400 hover:text-slate-200 text-xl sm:text-2xl"
               >
                 ✕
               </button>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
+              {/* Avatar Selection */}
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">{t('common.profilePicture')}</label>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {formData.avatar ? (
+                      <img 
+                        src={`/avatars/${formData.avatar}`} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white text-lg font-bold">
+                        {formData.f_name?.[0]?.toUpperCase() || 'O'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAvatarSelector(!showAvatarSelector)}
+                    className="btn-secondary text-xs px-2 sm:px-3 py-1 sm:py-1.5"
+                  >
+                    {t('common.changeAvatar')}
+                  </button>
+                </div>
+                {showAvatarSelector && (
+                  <div className="mt-2 sm:mt-3 grid grid-cols-3 gap-2 max-w-[150px] sm:max-w-[180px]">
+                    {availableAvatars.map((avatar) => (
+                      <button
+                        key={avatar}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, avatar }))
+                          setShowAvatarSelector(false)
+                        }}
+                        className={`relative w-full aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                          formData.avatar === avatar 
+                            ? 'border-purple-500 ring-1 ring-purple-500/50' 
+                            : 'border-slate-600 hover:border-purple-400'
+                        }`}
+                      >
+                        <img 
+                          src={`/avatars/${avatar}`} 
+                          alt={avatar} 
+                          className="w-full h-full object-cover"
+                        />
+                        {formData.avatar === avatar && (
+                          <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                            <span className="text-white text-base">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               {/* Personal Details Section */}
               <div>
-                <h3 className="text-responsive-md font-semibold text-slate-300 mb-4">{t('owner.personalDetails')}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h3 className="text-sm sm:text-base font-semibold text-slate-300 mb-2 sm:mb-4">{t('owner.personalDetails')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="text-responsive-sm font-medium text-slate-300">{t('common.firstName')} <span className="text-red-400">*</span></label>
                     <input 
@@ -483,8 +575,8 @@ export default function ProfilePage() {
 
               {/* Contact Information Section */}
               <div>
-                <h3 className="text-responsive-md font-semibold text-slate-300 mb-4">{t('owner.contactInformation')}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h3 className="text-sm sm:text-base font-semibold text-slate-300 mb-2 sm:mb-4">{t('owner.contactInformation')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="text-responsive-sm font-medium text-slate-300">{t('common.email')} <span className="text-slate-500">({t('common.optional')})</span></label>
                     <input 
@@ -514,7 +606,7 @@ export default function ProfilePage() {
 
               {/* Account Settings Section */}
               <div>
-                <h3 className="text-responsive-md font-semibold text-slate-300 mb-4">{t('owner.accountSettings')}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-slate-300 mb-2 sm:mb-4">{t('owner.accountSettings')}</h3>
                 <div>
                   <label className="text-responsive-sm font-medium text-slate-300">{t('owner.iban')}</label>
                   <div className="flex items-stretch mt-1" dir="ltr">
@@ -543,17 +635,17 @@ export default function ProfilePage() {
               </div>
             )}
             
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 pt-2 border-t border-slate-700/50 sticky bottom-0 bg-slate-800/95 backdrop-blur-sm -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6 pb-2 sm:pb-3">
               <button 
                 onClick={() => setShowEditForm(false)}
-                className="btn-ghost flex-1"
+                className="btn-ghost flex-1 text-sm sm:text-base py-2 sm:py-2.5"
                 disabled={isLoading}
               >
                 {t('common.cancel')}
               </button>
               <button 
                 onClick={handleProfileSave}
-                className="btn-primary flex-1"
+                className="btn-primary flex-1 text-sm sm:text-base py-2 sm:py-2.5"
                 disabled={isLoading}
               >
                 {isLoading ? t('common.saving') : t('common.save')}

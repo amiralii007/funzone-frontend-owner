@@ -43,6 +43,13 @@ interface DisplayComment {
   comment: string
   rating: number
   date: string
+  customer?: {
+    id: string
+    username?: string
+    f_name?: string
+    l_name?: string
+    avatar?: string
+  }
   replies: Array<{
     id: string
     text: string
@@ -53,6 +60,7 @@ interface DisplayComment {
       username?: string
       f_name?: string
       l_name?: string
+      avatar?: string
     }
   }>
 }
@@ -153,6 +161,7 @@ export default function CommentsPage() {
               comment: apiComment.comment,
               rating: 0, // Rating is not part of comment model, would need separate ratings API
               date,
+              customer: apiComment.customer,
               replies
             }
           })
@@ -289,6 +298,7 @@ export default function CommentsPage() {
               comment: apiComment.comment,
               rating: 0,
               date,
+              customer: apiComment.customer,
               replies
             }
           })
@@ -423,10 +433,29 @@ export default function CommentsPage() {
               <div key={comment.id} id={`comment-${comment.id}`} className="glass-card p-4 md:p-6">
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-sm font-semibold">
-                      {avatarLetter}
-                    </span>
+                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {comment.customer?.avatar ? (
+                      <img 
+                        src={`/avatars/${comment.customer.avatar}`} 
+                        alt={comment.username} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          const parent = target.parentElement
+                          if (parent) {
+                            const fallback = document.createElement('span')
+                            fallback.className = 'text-white text-sm font-semibold'
+                            fallback.textContent = avatarLetter
+                            parent.appendChild(fallback)
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-semibold">
+                        {avatarLetter}
+                      </span>
+                    )}
                   </div>
                   
                   {/* Comment Content */}
@@ -479,10 +508,35 @@ export default function CommentsPage() {
                           const replyFullName = reply.customer?.f_name && reply.customer?.l_name
                             ? `${reply.customer.f_name} ${reply.customer.l_name}`
                             : reply.customer?.username || 'مالک'
+                          const replyAvatarLetter = replyFullName[0]?.toUpperCase() || 'O'
                           
                           return (
                             <div key={reply.id} className="bg-slate-700/50 p-3 rounded-lg ml-4">
                               <div className="flex items-center gap-2 mb-2">
+                                <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {reply.customer?.avatar ? (
+                                    <img 
+                                      src={`/avatars/${reply.customer.avatar}`} 
+                                      alt={replyFullName} 
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement
+                                        target.style.display = 'none'
+                                        const parent = target.parentElement
+                                        if (parent) {
+                                          const fallback = document.createElement('span')
+                                          fallback.className = 'text-white text-xs font-semibold'
+                                          fallback.textContent = replyAvatarLetter
+                                          parent.appendChild(fallback)
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-white text-xs font-semibold">
+                                      {replyAvatarLetter}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-responsive-xs font-medium text-purple-400">
                                   {replyFullName}
                                 </span>

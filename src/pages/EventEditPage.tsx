@@ -54,17 +54,32 @@ export default function EventEditPage() {
 
   // Available requirements options with translation keys
   const requirementOptions = [
-    { key: 'registrationRequired', label: t('owner.requirements.registrationRequired') },
-    { key: 'gamingSkills', label: t('owner.requirements.gamingSkills') },
-    { key: 'reservationRecommended', label: t('owner.requirements.reservationRecommended') },
-    { key: 'ageRestriction', label: t('owner.requirements.ageRestriction') },
-    { key: 'equipmentProvided', label: t('owner.requirements.equipmentProvided') },
-    { key: 'teamRegistration', label: t('owner.requirements.teamRegistration') },
-    { key: 'idRequired', label: t('owner.requirements.idRequired') },
-    { key: 'membershipRequired', label: t('owner.requirements.membershipRequired') },
-    { key: 'soloParticipation', label: t('owner.requirements.soloParticipation') },
-    { key: 'beginnerFriendly', label: t('owner.requirements.beginnerFriendly') },
-    { key: 'menuPurchaseRequired', label: t('owner.requirements.menuPurchaseRequired') }
+    { key: 'generalRulesRequired', label: t('owner.requirements.generalRulesRequired') },
+    { key: 'smokingAllowedWithRestrictions', label: t('owner.requirements.smokingAllowedWithRestrictions') },
+    { key: 'smokingProhibited', label: t('owner.requirements.smokingProhibited') },
+    { key: 'alcoholDrugsProhibited', label: t('owner.requirements.alcoholDrugsProhibited') },
+    { key: 'intoxicatedNotAllowed', label: t('owner.requirements.intoxicatedNotAllowed') },
+    { key: 'publicEvent', label: t('owner.requirements.publicEvent') },
+    { key: 'menOnly', label: t('owner.requirements.menOnly') },
+    { key: 'womenOnly', label: t('owner.requirements.womenOnly') },
+    { key: 'familyOnly', label: t('owner.requirements.familyOnly') },
+    { key: 'minAge13', label: t('owner.requirements.minAge13') },
+    { key: 'minAge15', label: t('owner.requirements.minAge15') },
+    { key: 'minAge18', label: t('owner.requirements.minAge18') },
+    { key: 'allAges', label: t('owner.requirements.allAges') },
+    { key: 'menuOrderRequired', label: t('owner.requirements.menuOrderRequired') },
+    { key: 'reservationCodeRequired', label: t('owner.requirements.reservationCodeRequired') },
+    { key: 'arrive15MinEarly', label: t('owner.requirements.arrive15MinEarly') },
+    { key: 'noLateEntry', label: t('owner.requirements.noLateEntry') },
+    { key: 'capacityLimited', label: t('owner.requirements.capacityLimited') },
+    { key: 'cancellationPolicy', label: t('owner.requirements.cancellationPolicy') },
+    { key: 'gameManagementResponsibility', label: t('owner.requirements.gameManagementResponsibility') },
+    { key: 'noBettingOrCheating', label: t('owner.requirements.noBettingOrCheating') },
+    { key: 'photoVideoWithPermission', label: t('owner.requirements.photoVideoWithPermission') },
+    { key: 'silenceOrOrderRequired', label: t('owner.requirements.silenceOrOrderRequired') },
+    { key: 'organizerCancellationRights', label: t('owner.requirements.organizerCancellationRights') },
+    { key: 'guestBehaviorResponsibility', label: t('owner.requirements.guestBehaviorResponsibility') },
+    { key: 'additionalRulesInDescription', label: t('owner.requirements.additionalRulesInDescription') }
   ]
 
   // Helper function to format time consistently

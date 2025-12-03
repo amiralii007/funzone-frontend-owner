@@ -41,18 +41,18 @@ export default function VenuesPage() {
 
   // Available amenities options with translation keys
   const amenityOptions = [
-    { key: 'wifi', label: t('owner.amenities.wifi') },
     { key: 'parking', label: t('owner.amenities.parking') },
-    { key: 'foodService', label: t('owner.amenities.foodService') },
-    { key: 'airConditioning', label: t('owner.amenities.airConditioning') },
-    { key: 'tvScreens', label: t('owner.amenities.tvScreens') },
-    { key: 'gamingEquipment', label: t('owner.amenities.gamingEquipment') },
-    { key: 'soundSystem', label: t('owner.amenities.soundSystem') },
-    { key: 'projector', label: t('owner.amenities.projector') },
+    { key: 'nearMetro', label: t('owner.amenities.nearMetro') },
+    { key: 'groupWatching', label: t('owner.amenities.groupWatching') },
     { key: 'restrooms', label: t('owner.amenities.restrooms') },
+    { key: 'airConditioning', label: t('owner.amenities.airConditioning') },
+    { key: 'wifi', label: t('owner.amenities.wifi') },
+    { key: 'privateParking', label: t('owner.amenities.privateParking') },
+    { key: 'projector', label: t('owner.amenities.projector') },
+    { key: 'tvScreens', label: t('owner.amenities.tvScreens') },
+    { key: 'soundSystem', label: t('owner.amenities.soundSystem') },
     { key: 'outdoorSpace', label: t('owner.amenities.outdoorSpace') },
-    { key: 'library', label: t('owner.amenities.library') },
-    { key: 'smokingArea', label: t('owner.amenities.smokingArea') }
+    { key: 'library', label: t('owner.amenities.library') }
   ]
 
   // Map state

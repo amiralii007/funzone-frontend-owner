@@ -422,6 +422,54 @@ export default function SupportPage() {
                   {t('support.faq3.answer')}
                 </p>
               </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq4.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq4.answer')}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq5.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq5.answer')}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq6.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq6.answer')}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq8.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq8.answer')}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq9.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq9.answer')}
+                </p>
+              </div>
+              <div className="p-4 bg-slate-800/40 rounded-lg">
+                <h3 className="text-responsive-sm font-semibold text-slate-200 mb-2">
+                  {t('support.faq10.question')}
+                </h3>
+                <p className="text-responsive-sm text-slate-400">
+                  {t('support.faq10.answer')}
+                </p>
+              </div>
             </div>
           </div>
         </div>

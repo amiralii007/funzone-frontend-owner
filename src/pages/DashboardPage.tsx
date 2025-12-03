@@ -133,24 +133,38 @@ export default function DashboardPage() {
       
       // Combine comments and ratings into a unified format
           const combinedData = [
-        ...commentsData.map((comment: any) => ({
-          id: `comment_${comment.id}`,
-          type: comment.event ? 'event' : 'venue',
-          targetName: comment.event?.name || comment.social_hub?.name || 'نامشخص',
-          username: comment.customer?.f_name || 'کاربر',
-          comment: comment.comment,
-          rating: null, // Comments don't have ratings
-          date: new Date(comment.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')
-        })),
-        ...ratingsData.map((rating: any) => ({
-          id: `rating_${rating.id}`,
-          type: rating.event ? 'event' : 'venue',
-          targetName: rating.event?.name || rating.social_hub?.name || 'نامشخص',
-          username: rating.customer?.f_name || 'کاربر',
-          comment: null, // Ratings don't have comments
-          rating: rating.rating,
-          date: new Date(rating.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')
-        }))
+        ...commentsData.map((comment: any) => {
+          // Get display name: prioritize f_name + l_name, fallback to username, then mobile_number
+          const fullName = `${comment.customer?.f_name || ''} ${comment.customer?.l_name || ''}`.trim()
+          const displayName = fullName || comment.customer?.username || comment.customer?.mobile_number || 'کاربر ناشناس'
+          
+          return {
+            id: `comment_${comment.id}`,
+            type: comment.event ? 'event' : 'venue',
+            targetName: comment.event?.name || comment.social_hub?.name || 'نامشخص',
+            username: displayName,
+            comment: comment.comment,
+            rating: null, // Comments don't have ratings
+            date: new Date(comment.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US'),
+            customer: comment.customer // Preserve full customer object including avatar
+          }
+        }),
+        ...ratingsData.map((rating: any) => {
+          // Get display name: prioritize f_name + l_name, fallback to username, then mobile_number
+          const fullName = `${rating.customer?.f_name || ''} ${rating.customer?.l_name || ''}`.trim()
+          const displayName = fullName || rating.customer?.username || rating.customer?.mobile_number || 'کاربر ناشناس'
+          
+          return {
+            id: `rating_${rating.id}`,
+            type: rating.event ? 'event' : 'venue',
+            targetName: rating.event?.name || rating.social_hub?.name || 'نامشخص',
+            username: displayName,
+            comment: null, // Ratings don't have comments
+            rating: rating.rating,
+            date: new Date(rating.created_at).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US'),
+            customer: rating.customer // Preserve full customer object including avatar
+          }
+        })
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       
       setComments(combinedData)
@@ -345,8 +359,28 @@ export default function DashboardPage() {
     <div className={`container-responsive p-responsive space-responsive ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Welcome Section */}
       <div className="glass-card p-4 sm:p-6 text-center space-y-4">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-xl sm:text-2xl font-bold shadow-glow">
-          {isLoggedIn && state.auth.user?.f_name ? state.auth.user.f_name[0] : '🏢'}
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-xl sm:text-2xl font-bold shadow-glow overflow-hidden">
+          {isLoggedIn && state.auth.user?.avatar ? (
+            <img 
+              src={`/avatars/${state.auth.user.avatar}`} 
+              alt={state.auth.user.f_name || 'Owner'} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initial if image fails to load
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                const parent = target.parentElement
+                if (parent) {
+                  const fallback = document.createElement('span')
+                  fallback.className = 'text-xl sm:text-2xl'
+                  fallback.textContent = isLoggedIn && state.auth.user?.f_name ? state.auth.user.f_name[0] : '🏢'
+                  parent.appendChild(fallback)
+                }
+              }}
+            />
+          ) : (
+            <span>{isLoggedIn && state.auth.user?.f_name ? state.auth.user.f_name[0] : '🏢'}</span>
+          )}
         </div>
         <div>
           <h1 className="text-responsive-xl font-bold text-gradient">
@@ -604,16 +638,38 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="space-y-3">
-            {comments.slice(0, 3).map((comment) => (
+            {comments.slice(0, 3).map((comment) => {
+              // Get first letter of username for avatar fallback
+              const avatarLetter = comment.username?.[0]?.toUpperCase() || 'U'
+              
+              return (
               <div key={comment.id} className="glass-card p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full grid place-items-center text-white font-bold text-sm ${
-                      comment.type === 'event' 
-                        ? 'bg-gradient-to-r from-teal-500 to-blue-500' 
-                        : 'bg-gradient-to-r from-purple-500 to-pink-500'
-                    }`}>
-                      {comment.type === 'event' ? '🎉' : '🏢'}
+                    {/* Avatar */}
+                    <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {comment.customer?.avatar ? (
+                        <img 
+                          src={`/avatars/${comment.customer.avatar}`} 
+                          alt={comment.username} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            const parent = target.parentElement
+                            if (parent) {
+                              const fallback = document.createElement('span')
+                              fallback.className = 'text-white text-xs font-semibold'
+                              fallback.textContent = avatarLetter
+                              parent.appendChild(fallback)
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="text-white text-xs font-semibold">
+                          {avatarLetter}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <div className="font-semibold text-responsive-sm">{comment.username}</div>
@@ -649,7 +705,8 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
-            ))}
+            )
+            })}
           </div>
         </div>
       )}
