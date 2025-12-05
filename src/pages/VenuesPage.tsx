@@ -23,6 +23,22 @@ export default function VenuesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [togglingVenue, setTogglingVenue] = useState<string | null>(null)
+  
+  // Check if user is admin (staff or superuser)
+  const isAdmin = () => {
+    // Check JWT token for admin claims
+    try {
+      const token = localStorage.getItem('access_token')
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        return payload.is_staff === true || payload.is_superuser === true
+      }
+    } catch (e) {
+      console.error('Error checking admin status:', e)
+    }
+    return false
+  }
   
   // Form state
   const [formData, setFormData] = useState({
@@ -124,7 +140,8 @@ export default function VenuesPage() {
             amenities: [], // SocialHub doesn't have amenities field
             images: hub.image_url ? [hub.image_url] : [],
             category: 'General', // Default category
-            status: 'active',
+            status: hub.is_active !== false ? 'active' : 'inactive',
+            is_active: hub.is_active !== false, // Default to true if not specified
             owner_id: hub.owner,
             created_at: new Date().toISOString(), // SocialHub doesn't have created_at
             updated_at: new Date().toISOString(), // SocialHub doesn't have updated_at
@@ -506,6 +523,47 @@ export default function VenuesPage() {
     setVenueToDelete(null)
   }
 
+  // Toggle venue active status (admin only)
+  const handleToggleVenueStatus = async (venue: Venue) => {
+    if (!isAdmin()) {
+      alert(t('common.accessDenied') || 'Access denied. Admin privileges required.')
+      return
+    }
+
+    setTogglingVenue(venue.id)
+    try {
+      const newStatus = !venue.is_active
+      await apiService.updateVenue(venue.id, { is_active: newStatus })
+      
+      // Update local state - ensure both is_active and status are updated
+      setVenues(prevVenues => 
+        prevVenues.map(v => 
+          v.id === venue.id 
+            ? { 
+                ...v, 
+                is_active: newStatus, 
+                status: newStatus ? 'active' : 'inactive' 
+              }
+            : v
+        )
+      )
+      
+      alert(newStatus 
+        ? (t('owner.venueActivated') || 'Venue activated successfully')
+        : (t('owner.venueDeactivated') || 'Venue deactivated. Users will see "Call Support" message.')
+      )
+      
+      // Refresh venues list to ensure data is in sync with backend
+      await fetchVenues()
+    } catch (error: unknown) {
+      console.error('Error toggling venue status:', error)
+      const message = error instanceof Error ? error.message : String(error)
+      alert(t('common.error') || 'Error: ' + message)
+    } finally {
+      setTogglingVenue(null)
+    }
+  }
+
 
   return (
     <div className={`container-responsive p-responsive space-responsive ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -548,10 +606,17 @@ export default function VenuesPage() {
           </div>
         ) : (
           venues.map((venue) => (
-          <div key={venue.id} className="glass-card p-4 sm:p-6 space-y-4">
+          <div key={venue.id} className={`glass-card p-4 sm:p-6 space-y-4 ${venue.is_active === false ? 'opacity-60 bg-slate-800/50' : 'opacity-100'}`}>
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="space-y-2 flex-1">
-                <h3 className="text-responsive-lg font-semibold">{venue.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-responsive-lg font-semibold">{venue.name}</h3>
+                  {venue.is_active === false && (
+                    <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-medium">
+                      {t('owner.callSupport') || 'Call Support'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-responsive-sm text-slate-400 line-clamp-2">{venue.description}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-responsive-xs text-slate-500">
                   <span className="flex items-center gap-1">📍 {venue.address}</span>
@@ -559,13 +624,28 @@ export default function VenuesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`chip text-xs ${
-                  venue.status === 'active' ? 'bg-green-500/20 text-green-400' : 
-                  venue.status === 'inactive' ? 'bg-red-500/20 text-red-400' : 
-                  'bg-yellow-500/20 text-yellow-400'
-                }`}>
-                  {t(`owner.${venue.status}`)}
-                </span>
+                {isAdmin() ? (
+                  <button
+                    onClick={() => handleToggleVenueStatus(venue)}
+                    disabled={togglingVenue === venue.id}
+                    className={`text-xs px-3 py-1.5 hover-scale transition-all ${
+                      venue.is_active !== false
+                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                    } ${togglingVenue === venue.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={venue.is_active !== false ? t('owner.deactivateVenue') || 'Deactivate Venue' : t('owner.activateVenue') || 'Activate Venue'}
+                  >
+                    {togglingVenue === venue.id ? '⟳' : venue.is_active !== false ? '✓ Active' : '✗ Inactive'}
+                  </button>
+                ) : (
+                  <span className={`chip text-xs ${
+                    venue.status === 'active' ? 'bg-green-500/20 text-green-400' : 
+                    venue.status === 'inactive' ? 'bg-red-500/20 text-red-400' : 
+                    'bg-yellow-500/20 text-yellow-400'
+                  }`}>
+                    {venue.is_active === false ? (t('owner.callSupport') || 'Call Support') : t(`owner.${venue.status}`)}
+                  </span>
+                )}
                 <div className="flex gap-2">
                   <button 
                     onClick={() => navigate(`/venues/${venue.id}/edit`)}

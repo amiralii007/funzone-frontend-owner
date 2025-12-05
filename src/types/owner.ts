@@ -30,6 +30,7 @@ export interface Venue {
   images: string[]
   category: string
   status: 'active' | 'inactive' | 'draft'
+  is_active?: boolean
   owner_id: string
   created_at: string
   updated_at: string
