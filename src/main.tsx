@@ -14,6 +14,7 @@ import SupportPage from './pages/SupportPage'
 import CommentsPage from './pages/CommentsPage'
 import ReservationsPage from './pages/ReservationsPage'
 import LoginPage from './pages/LoginPage'
+import PaymentCallbackPage from './pages/PaymentCallbackPage'
 import AuthGuard from './components/AuthGuard'
 import ProfileCompletionGuard from './components/ProfileCompletionGuard'
 import ScrollRestoration from './components/ScrollRestoration'
@@ -53,6 +54,15 @@ const router = createBrowserRouter([
       <>
         <ScrollRestoration />
         <LoginPage />
+      </>
+    ),
+  },
+  {
+    path: '/payment/callback',
+    element: (
+      <>
+        <ScrollRestoration />
+        <PaymentCallbackPage />
       </>
     ),
   },

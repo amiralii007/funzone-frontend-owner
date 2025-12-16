@@ -105,7 +105,9 @@ class ApiService {
     requireAuth: boolean = true,
     cacheOptions?: CacheOptions
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`
+    // Remove leading slash if present to avoid double slashes, then add it back
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+    const url = `${this.baseURL}/${cleanEndpoint}`
     
     // Check cache for GET requests if caching is enabled
     const isGetRequest = !options.method || options.method === 'GET'

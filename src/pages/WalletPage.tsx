@@ -75,31 +75,16 @@ export default function WalletPage() {
       
       const response = await apiService.depositToWallet(amount)
       
-      if (response.transaction && response.new_balance !== undefined) {
-        // Update balance in auth state
-        if (state.auth.user) {
-          updateOwner({
-            ...state.auth.user,
-            balance: response.new_balance
-          })
-        }
-        
-        // Add new transaction to list
-        setTransactions(prev => [response.transaction, ...prev])
-        
-        setSuccessMessage(response.message || 'واریز با موفقیت انجام شد')
-        setDepositAmount('')
-        setShowDepositForm(false)
-        
-        // Refresh transactions to get latest
-        setTimeout(() => {
-          fetchTransactions()
-        }, 500)
+      if (response.success && response.payment_url) {
+        // Redirect to payment gateway
+        window.location.href = response.payment_url
+      } else {
+        setError(response.message || t('owner.errorDepositing'))
+        setIsLoading(false)
       }
     } catch (err: any) {
       console.error('Error depositing:', err)
       setError(err.message || t('owner.errorDepositing'))
-    } finally {
       setIsLoading(false)
     }
   }

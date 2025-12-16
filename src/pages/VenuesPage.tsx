@@ -51,6 +51,9 @@ export default function VenuesPage() {
     amenities: [] as string[]
   })
 
+  // Field errors state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({})
+
   // Photo upload state
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [previewImages, setPreviewImages] = useState<string[]>([])
@@ -190,6 +193,15 @@ export default function VenuesPage() {
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+    
     // Convert Persian numbers to English for numeric fields
     const processedValue = field === 'postal_code' ? toEnglishNumbers(value) : value
     
@@ -248,16 +260,44 @@ export default function VenuesPage() {
 
   // Handle form submission
   const handleSaveVenue = async () => {
-    if (!formData.name.trim() || !formData.description.trim() || !formData.address.trim() || !formData.postal_code.trim()) {
-      alert(t('owner.fillAllFields'))
-      return
+    // Validate all required fields and collect missing fields
+    const missingFields: string[] = []
+    const errors: Record<string, boolean> = {}
+    
+    if (!formData.name.trim()) {
+      missingFields.push(t('owner.venueName'))
+      errors.name = true
     }
-
-    // Validate postal code is exactly 10 digits
-    if (formData.postal_code.length !== 10) {
+    if (!formData.description.trim()) {
+      missingFields.push(t('owner.venueDescription'))
+      errors.description = true
+    }
+    if (!formData.address.trim()) {
+      missingFields.push(t('owner.venueAddress'))
+      errors.address = true
+    }
+    if (!formData.postal_code.trim()) {
+      missingFields.push(t('owner.venuePostalCode'))
+      errors.postal_code = true
+    } else if (formData.postal_code.length !== 10) {
+      // Postal code validation error
+      errors.postal_code = true
+      setFieldErrors(errors)
       alert(t('owner.postalCodeMustBe10Digits'))
       return
     }
+    
+    if (missingFields.length > 0) {
+      setFieldErrors(errors)
+      const errorMessage = language === 'fa' 
+        ? `لطفا فیلدهای زیر را پر کنید:\n${missingFields.map(field => `• ${field}`).join('\n')}`
+        : `Please fill in the following fields:\n${missingFields.map(field => `• ${field}`).join('\n')}`
+      alert(errorMessage)
+      return
+    }
+    
+    // Clear any previous errors
+    setFieldErrors({})
 
     setIsLoading(true)
     try {
@@ -354,6 +394,7 @@ export default function VenuesPage() {
         longitude: 51.3347,
         amenities: []
       })
+      setFieldErrors({})
       setSelectedLocation([35.7219, 51.3347])
       setSelectedImages([])
       setPreviewImages([])
@@ -441,6 +482,7 @@ export default function VenuesPage() {
       longitude: 51.3347,
       amenities: []
     })
+    setFieldErrors({})
     setSelectedLocation([35.7219, 51.3347])
     setSelectedImages([])
     setPreviewImages([])
@@ -706,7 +748,7 @@ export default function VenuesPage() {
                 <input 
                   id="venue-name"
                   type="text" 
-                  className="input-field w-full mt-1"
+                  className={`input-field w-full mt-1 ${fieldErrors.name ? 'border-red-500 border-2' : ''}`}
                   placeholder={t('owner.venueName')}
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -717,7 +759,7 @@ export default function VenuesPage() {
                 <label htmlFor="venue-description" className="text-responsive-sm font-medium text-slate-300">{t('owner.venueDescription')}</label>
                 <textarea 
                   id="venue-description"
-                  className="input-field w-full mt-1 h-20 resize-none"
+                  className={`input-field w-full mt-1 h-20 resize-none ${fieldErrors.description ? 'border-red-500 border-2' : ''}`}
                   placeholder={t('owner.venueDescription')}
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
@@ -729,7 +771,7 @@ export default function VenuesPage() {
                 <input 
                   id="venue-address"
                   type="text" 
-                  className="input-field w-full mt-1"
+                  className={`input-field w-full mt-1 ${fieldErrors.address ? 'border-red-500 border-2' : ''}`}
                   placeholder={t('owner.venueAddress')}
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
@@ -741,7 +783,7 @@ export default function VenuesPage() {
                 <input 
                   id="venue-postal-code"
                   type="text" 
-                  className="input-field w-full mt-1"
+                  className={`input-field w-full mt-1 ${fieldErrors.postal_code ? 'border-red-500 border-2' : ''}`}
                   placeholder={language === 'fa' ? "۱۲۳۴۵۶۷۸۹۰" : "1234567890"}
                   value={language === 'fa' ? toPersianNumbers(formData.postal_code) : formData.postal_code}
                   onChange={(e) => handleInputChange('postal_code', e.target.value)}

@@ -208,13 +208,16 @@ export default function EventsPage() {
     duration: '2', // Default duration in hours
     capacity: '',
     price: '',
-    minimum_players: '',
+    minimum_players: '1',
     minimum_seats: '', // Minimum seats (MS) field
     social_hub: '',
     requirements: [] as string[],
     ticket_closing_timer: '', // Ticket closing timer in hours
     images: [] as File[] // Photo uploads
   })
+
+  // Field errors state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({})
 
   // Available requirements options with translation keys
   const requirementOptions = [
@@ -345,8 +348,8 @@ export default function EventsPage() {
       setEvents(formattedEvents)
       console.log('Successfully loaded events:', formattedEvents.length)
       console.log('Sample event category:', formattedEvents[0]?.category)
-      console.log('Events with ratings:', formattedEvents.filter(e => e.rating > 0).length)
-      console.log('Sample events with ratings:', formattedEvents.filter(e => e.rating > 0).slice(0, 3))
+      console.log('Events with ratings:', formattedEvents.filter((e: Event) => e.rating > 0).length)
+      console.log('Sample events with ratings:', formattedEvents.filter((e: Event) => e.rating > 0).slice(0, 3))
       console.log('Available categories:', eventCategories)
     } catch (error) {
       console.error('Error fetching events:', error)
@@ -397,9 +400,39 @@ export default function EventsPage() {
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+    
     // Convert Persian numbers to English for numeric fields
     const numericFields = ['capacity', 'price', 'minimum_players', 'minimum_seats', 'ticket_closing_timer']
     let processedValue = numericFields.includes(field) ? toEnglishNumbers(value.replace(/,/g, '')) : value
+    
+    // For integer-only fields, ensure only integers are accepted
+    const integerFields = ['capacity', 'minimum_players', 'minimum_seats']
+    if (integerFields.includes(field)) {
+      // Remove any non-digit characters
+      processedValue = processedValue.replace(/[^\d]/g, '')
+      // Ensure it's a valid integer (empty string is allowed for clearing the field)
+      if (processedValue && !/^\d+$/.test(processedValue)) {
+        return // Don't update if invalid
+      }
+    }
+    
+    // For price field, also ensure it's an integer
+    if (field === 'price') {
+      // Remove any non-digit characters
+      processedValue = processedValue.replace(/[^\d]/g, '')
+      // Ensure it's a valid integer (empty string is allowed for clearing the field)
+      if (processedValue && !/^\d+$/.test(processedValue)) {
+        return // Don't update if invalid
+      }
+    }
     
     // Handle social_hub field specially - keep as string for UUID
     if (field === 'social_hub' && value) {
@@ -667,13 +700,14 @@ export default function EventsPage() {
         duration: '2',
         capacity: '',
         price: '',
-        minimum_players: '',
+        minimum_players: '1',
         minimum_seats: '',
         social_hub: '',
         requirements: [],
         ticket_closing_timer: '',
         images: []
       })
+      setFieldErrors({})
       setShowAddForm(false)
       
       // Show success message
@@ -707,28 +741,71 @@ export default function EventsPage() {
     console.log('Available social hubs:', socialHubs)
     console.log('Social hubs count:', socialHubs.length)
     
-    // Validate all required fields except requirements and photos
-    if (!formData.name.trim() || !formData.description.trim() || !formData.category.trim() || 
-        !formData.date.trim() || !formData.time.trim() || !formData.duration.trim() || 
-        !formData.capacity.trim() || !formData.price.trim() || !formData.minimum_players.trim() || 
-        !formData.minimum_seats.trim() || !formData.social_hub || !formData.ticket_closing_timer.trim()) {
-      console.log('Validation failed - missing required fields:')
-      console.log('name:', !!formData.name.trim())
-      console.log('description:', !!formData.description.trim())
-      console.log('category:', !!formData.category.trim())
-      console.log('date:', !!formData.date.trim())
-      console.log('time:', !!formData.time.trim())
-      console.log('duration:', !!formData.duration.trim())
-      console.log('capacity:', !!formData.capacity.trim())
-      console.log('price:', !!formData.price.trim())
-      console.log('minimum_players:', !!formData.minimum_players.trim())
-      console.log('minimum_seats:', !!formData.minimum_seats.trim())
-      console.log('social_hub:', !!formData.social_hub)
-      console.log('ticket_closing_timer:', !!formData.ticket_closing_timer.trim())
-      alert(t('owner.fillAllRequiredFields'))
+    // Validate all required fields and collect missing fields
+    const missingFields: string[] = []
+    const errors: Record<string, boolean> = {}
+    
+    if (!formData.name.trim()) {
+      missingFields.push(t('owner.eventName'))
+      errors.name = true
+    }
+    if (!formData.description.trim()) {
+      missingFields.push(t('owner.eventDescription'))
+      errors.description = true
+    }
+    if (!formData.category.trim()) {
+      missingFields.push(t('owner.eventCategory'))
+      errors.category = true
+    }
+    if (!formData.date.trim()) {
+      missingFields.push(t('owner.eventDate'))
+      errors.date = true
+    }
+    if (!formData.time.trim()) {
+      missingFields.push(t('owner.eventTime'))
+      errors.time = true
+    }
+    if (!formData.duration.trim()) {
+      missingFields.push(t('owner.duration'))
+      errors.duration = true
+    }
+    if (!formData.capacity.trim()) {
+      missingFields.push(t('owner.eventCapacity'))
+      errors.capacity = true
+    }
+    if (!formData.price.trim()) {
+      missingFields.push(t('owner.eventPrice'))
+      errors.price = true
+    }
+    if (!formData.minimum_players.trim()) {
+      missingFields.push(t('owner.minimumTeams'))
+      errors.minimum_players = true
+    }
+    if (!formData.minimum_seats.trim()) {
+      missingFields.push(t('owner.minimumCapacity'))
+      errors.minimum_seats = true
+    }
+    if (!formData.social_hub) {
+      missingFields.push(t('owner.selectVenue'))
+      errors.social_hub = true
+    }
+    if (!formData.ticket_closing_timer.trim()) {
+      missingFields.push(t('owner.ticketClosingTimer'))
+      errors.ticket_closing_timer = true
+    }
+    
+    if (missingFields.length > 0) {
+      setFieldErrors(errors)
+      const errorMessage = language === 'fa' 
+        ? `لطفا فیلدهای زیر را پر کنید:\n${missingFields.map(field => `• ${field}`).join('\n')}`
+        : `Please fill in the following fields:\n${missingFields.map(field => `• ${field}`).join('\n')}`
+      alert(errorMessage)
       setIsLoading(false)
       return
     }
+    
+    // Clear any previous errors
+    setFieldErrors({})
 
     // Validate category selection
     if (!formData.category.trim()) {
@@ -877,13 +954,14 @@ export default function EventsPage() {
       duration: '2',
       capacity: '',
       price: '',
-      minimum_players: '',
+      minimum_players: '1',
       minimum_seats: '',
       social_hub: '',
       requirements: [],
       ticket_closing_timer: '',
       images: []
     })
+    setFieldErrors({})
     // Clear uploaded files and localStorage
     setUploadedFiles([])
     setPreviewImages([])
@@ -1212,7 +1290,7 @@ export default function EventsPage() {
                   <span>
                     {isCancelled ? t('owner.ticketSalesClosed') :
                      isCompleted ? t('owner.ticketSalesClosedSuccess') :
-                     t('owner.ticketSalesWillClose', { hours: formatNumber(event.ticket_closing_timer, language) })}
+                     `${t('owner.ticketSalesWillClose')} ${formatNumber(event.ticket_closing_timer || 0, language)} ${language === 'fa' ? 'ساعت' : 'hours'}`}
                   </span>
                 </div>
               </div>
@@ -1263,14 +1341,14 @@ export default function EventsPage() {
             
             <div className="space-y-4">
               {/* Category Selection - Moved to top and made prominent */}
-              <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+              <div className={`bg-slate-800/50 p-4 rounded-lg border ${fieldErrors.category ? 'border-red-500' : 'border-slate-700'}`}>
                 <label htmlFor="event-category" className="text-responsive-sm font-medium text-slate-300 flex items-center gap-2">
                   <span className="text-yellow-400">⭐</span>
                   {t('owner.eventCategory')} <span className="text-red-400">*</span>
                 </label>
                 <select 
                   id="event-category"
-                  className="input-field w-full mt-2 text-lg"
+                  className={`input-field w-full mt-2 text-lg ${fieldErrors.category ? 'border-red-500 border-2' : ''}`}
                   value={formData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
                   disabled={isLoadingCategories}
@@ -1295,7 +1373,7 @@ export default function EventsPage() {
                 <input 
                   id="event-name"
                   type="text" 
-                  className="input-field w-full mt-1"
+                  className={`input-field w-full mt-1 ${fieldErrors.name ? 'border-red-500 border-2' : ''}`}
                   placeholder={t('owner.eventName')}
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -1307,7 +1385,7 @@ export default function EventsPage() {
                 <label htmlFor="event-description" className="text-responsive-sm font-medium text-slate-300">{t('owner.eventDescription')} <span className="text-red-400">*</span></label>
                 <textarea 
                   id="event-description"
-                  className="input-field w-full mt-1 h-20 resize-none"
+                  className={`input-field w-full mt-1 h-20 resize-none ${fieldErrors.description ? 'border-red-500 border-2' : ''}`}
                   placeholder={t('owner.eventDescription')}
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
@@ -1319,7 +1397,7 @@ export default function EventsPage() {
                 <label htmlFor="event-social-hub" className="text-responsive-sm font-medium text-slate-300">{t('owner.selectVenue')} <span className="text-red-400">*</span></label>
                 <select 
                   id="event-social-hub"
-                  className="input-field w-full mt-1"
+                  className={`input-field w-full mt-1 ${fieldErrors.social_hub ? 'border-red-500 border-2' : ''}`}
                   value={formData.social_hub}
                   onChange={(e) => {
                     console.log('Social hub dropdown changed:', e.target.value)
@@ -1345,31 +1423,35 @@ export default function EventsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="event-date" className="text-responsive-sm font-medium text-slate-300">{t('owner.eventDate')} <span className="text-red-400">*</span></label>
-                  <SolarHijriDatePicker
-                    value={formData.date}
-                    onChange={(value) => handleInputChange('date', value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                    language={language}
-                  />
+                  <div className={fieldErrors.date ? 'border-2 border-red-500 rounded-lg' : ''}>
+                    <SolarHijriDatePicker
+                      value={formData.date}
+                      onChange={(value) => handleInputChange('date', value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                      language={language}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="text-responsive-sm font-medium text-slate-300">{t('owner.eventTime')} <span className="text-red-400">*</span></label>
-                  <TimePicker
-                    value={formData.time}
-                    onChange={(value) => {
-                      console.log('Time input changed:', value)
-                      handleInputChange('time', value)
-                    }}
-                    required
-                    language={language}
-                  />
+                  <div className={fieldErrors.time ? 'border-2 border-red-500 rounded-lg' : ''}>
+                    <TimePicker
+                      value={formData.time}
+                      onChange={(value) => {
+                        console.log('Time input changed:', value)
+                        handleInputChange('time', value)
+                      }}
+                      required
+                      language={language}
+                    />
+                  </div>
                 </div>
                 <div className="sm:col-span-2 lg:col-span-1">
                   <label htmlFor="event-duration" className="text-responsive-sm font-medium text-slate-300">{t('owner.duration')} {language === 'fa' ? '(ساعت)' : '(hours)'} <span className="text-red-400">*</span></label>
                   <select 
                     id="event-duration"
-                    className="input-field w-full mt-1"
+                    className={`input-field w-full mt-1 ${fieldErrors.duration ? 'border-red-500 border-2' : ''}`}
                     value={formData.duration}
                     onChange={(e) => handleInputChange('duration', e.target.value)}
                     required
@@ -1393,7 +1475,7 @@ export default function EventsPage() {
                           const endTime = new Date(startTime.getTime() + (durationHours * 60 * 60 * 1000))
                           const now = new Date()
                           
-                          const endTimeString = language === 'fa' ? formatPersianTime(endTime.toTimeString().slice(0, 5)) : formatTime(endTime.toTimeString().slice(0, 5), language)
+                          const endTimeString = language === 'fa' ? formatPersianTime(endTime.toTimeString().slice(0, 5)) : formatTime24(endTime.toTimeString().slice(0, 5), language)
                           
                           // Check for validation issues
                           if (startTime < now) {
@@ -1401,7 +1483,7 @@ export default function EventsPage() {
                           } else if (endTime <= startTime) {
                             return <span className="text-red-400">⚠️ {t('owner.invalidTimeCalculation')}</span>
                           } else {
-                            return <span className="text-green-400">✓ {language === 'fa' ? `رویداد در ساعت ${endTimeString} به پایان می‌رسد` : t('owner.eventEndsAt', { time: endTimeString })}</span>
+                            return <span className="text-green-400">✓ {language === 'fa' ? `رویداد در ساعت ${endTimeString} به پایان می‌رسد` : `${t('owner.eventEndsAt')} ${endTimeString}`}</span>
                           }
                         } catch (e) {
                           return <span className="text-red-400">⚠️ {t('owner.invalidTimeFormat')}</span>
@@ -1418,10 +1500,25 @@ export default function EventsPage() {
                   <input 
                     id="event-capacity"
                     type="text" 
-                    className="input-field w-full mt-1"
+                    className={`input-field w-full mt-1 ${fieldErrors.capacity ? 'border-red-500 border-2' : ''}`}
                     placeholder={language === 'fa' ? '۵۰' : '50'}
                     value={language === 'fa' ? toPersianNumbers(formData.capacity) : formData.capacity}
-                    onChange={(e) => handleInputChange('capacity', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      // Convert Persian numbers to English and validate
+                      const englishValue = toEnglishNumbers(value.replace(/,/g, ''))
+                      // Only allow positive integers
+                      if (englishValue === '' || /^\d+$/.test(englishValue)) {
+                        handleInputChange('capacity', englishValue)
+                      }
+                    }}
+                    onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      // Allow English digits, Persian digits, and control keys
+                      const persianDigits = /[\u06F0-\u06F9]/
+                      if (!/[0-9]/.test(e.key) && !persianDigits.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                        e.preventDefault()
+                      }
+                    }}
                     dir="ltr"
                     required
                   />
@@ -1432,9 +1529,24 @@ export default function EventsPage() {
                     <input 
                       id="event-price"
                       type="text" 
-                      className="input-field w-full pr-16"
-                      value={toPersianNumbers(formatNumberWithCommas(formData.price))}
-                      onChange={(e) => handleInputChange('price', e.target.value)}
+                      className={`input-field w-full pr-16 ${fieldErrors.price ? 'border-red-500 border-2' : ''}`}
+                      value={language === 'fa' ? toPersianNumbers(formData.price) : formData.price}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        // Convert Persian numbers to English and validate
+                        const englishValue = toEnglishNumbers(value.replace(/,/g, ''))
+                        // Only allow positive integers
+                        if (englishValue === '' || /^\d+$/.test(englishValue)) {
+                          handleInputChange('price', englishValue)
+                        }
+                      }}
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        // Allow English digits, Persian digits, and control keys
+                        const persianDigits = /[\u06F0-\u06F9]/
+                        if (!/[0-9]/.test(e.key) && !persianDigits.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                          e.preventDefault()
+                        }
+                      }}
                       dir="ltr"
                       required
                     />
@@ -1451,23 +1563,58 @@ export default function EventsPage() {
                   <input 
                     id="event-minimum-players"
                     type="text" 
-                    className="input-field w-full mt-1"
-                    placeholder={language === 'fa' ? '۴' : '4'}
+                    className={`input-field w-full mt-1 ${fieldErrors.minimum_players ? 'border-red-500 border-2' : ''}`}
+                    placeholder={language === 'fa' ? '۱' : '1'}
                     value={language === 'fa' ? toPersianNumbers(formData.minimum_players) : formData.minimum_players}
-                    onChange={(e) => handleInputChange('minimum_players', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      // Convert Persian numbers to English and validate
+                      const englishValue = toEnglishNumbers(value.replace(/,/g, ''))
+                      // Only allow positive integers
+                      if (englishValue === '' || /^\d+$/.test(englishValue)) {
+                        handleInputChange('minimum_players', englishValue)
+                      }
+                    }}
+                    onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      // Allow English digits, Persian digits, and control keys
+                      const persianDigits = /[\u06F0-\u06F9]/
+                      if (!/[0-9]/.test(e.key) && !persianDigits.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                        e.preventDefault()
+                      }
+                    }}
                     dir="ltr"
                     required
                   />
+                  <p className="text-xs text-slate-400 mt-1">
+                    {language === 'fa' 
+                      ? 'حداقل تعداد خرید بلیط توسط کاربر کمتر از این تعداد کاربر مجاز به خرید بلیط نمیباشد'
+                      : 'Minimum number of ticket purchases by user - if less than this number, the user is not allowed to purchase tickets'}
+                  </p>
                 </div>
                 <div>
                   <label htmlFor="event-minimum-seats" className="text-responsive-sm font-medium text-slate-300">{t('owner.minimumCapacity')} <span className="text-red-400">*</span></label>
                   <input 
                     id="event-minimum-seats"
                     type="text" 
-                    className="input-field w-full mt-1"
+                    className={`input-field w-full mt-1 ${fieldErrors.minimum_seats ? 'border-red-500 border-2' : ''}`}
                     placeholder={language === 'fa' ? '۱۰' : '10'}
                     value={language === 'fa' ? toPersianNumbers(formData.minimum_seats) : formData.minimum_seats}
-                    onChange={(e) => handleInputChange('minimum_seats', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      // Convert Persian numbers to English and validate
+                      const englishValue = toEnglishNumbers(value.replace(/,/g, ''))
+                      // Only allow positive integers
+                      if (englishValue === '' || /^\d+$/.test(englishValue)) {
+                        handleInputChange('minimum_seats', englishValue)
+                      }
+                    }}
+                    onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                      // Allow English digits, Persian digits, and control keys
+                      const persianDigits = /[\u06F0-\u06F9]/
+                      if (!/[0-9]/.test(e.key) && !persianDigits.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                        e.preventDefault()
+                      }
+                    }}
                     dir="ltr"
                     required
                   />
@@ -1476,14 +1623,14 @@ export default function EventsPage() {
               </div>
 
               {/* Ticket Closing Timer */}
-              <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+              <div className={`bg-slate-800/50 p-4 rounded-lg border ${fieldErrors.ticket_closing_timer ? 'border-red-500' : 'border-slate-700'}`}>
                 <label htmlFor="event-ticket-closing-timer" className="text-responsive-sm font-medium text-slate-300 flex items-center gap-2 mb-3">
                   <span className="text-yellow-400">⏰</span>
                   {t('owner.ticketClosingTimer')} <span className="text-red-400">*</span>
                 </label>
                 <select 
                   id="event-ticket-closing-timer"
-                  className="input-field w-full"
+                  className={`input-field w-full ${fieldErrors.ticket_closing_timer ? 'border-red-500 border-2' : ''}`}
                   value={formData.ticket_closing_timer}
                   onChange={(e) => handleInputChange('ticket_closing_timer', e.target.value)}
                   required
