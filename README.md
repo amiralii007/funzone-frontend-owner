@@ -1,173 +1,156 @@
-# FunZone Owner App
+# FunZone Owner Frontend
 
-A modern React TypeScript application for venue owners to manage their business, venues, events, and wallet.
+React TypeScript application for venue owners to manage their social hubs, events, and reservations.
 
-## Features
+## 🚀 Features
 
-- **Owner Authentication**: Phone number-based login with verification code
-- **Dashboard**: Overview of business metrics and quick actions
-- **Venue Management**: Create, edit, and manage venues
-- **Event Management**: Create, edit, and manage events
-- **Wallet System**: Deposit, withdraw, and track transactions
-- **Analytics**: Business performance metrics and insights
-- **Profile Management**: Edit owner profile and settings
-- **Internationalization**: Support for English and Persian (RTL)
-- **Responsive Design**: Works on mobile, tablet, and desktop
+- **Venue Management**: Create and manage multiple social hubs/venues
+- **Event Management**: Create, update, and track event bookings
+- **Reservation Management**: View and manage customer reservations
+- **Analytics**: View event statistics, revenue, and booking trends
+- **Image Gallery**: Upload and manage venue and event images
+- **Multi-language Support**: Persian (Farsi) language support
+- **Solar Hijri Calendar**: Support for Persian calendar dates
+- **Interactive Maps**: Location management for venues
 
-## Tech Stack
+## 🏗️ Project Structure
 
-- **React 18** with TypeScript
-- **Vite** for build tooling
-- **Tailwind CSS** for styling
-- **React Router** for navigation
-- **Context API** for state management
+```
+funzone-frontend-owner/
+├── src/
+│   ├── components/          # React components
+│   ├── pages/              # Page components
+│   ├── services/           # API services
+│   ├── hooks/              # Custom React hooks
+│   ├── contexts/           # React contexts
+│   ├── utils/              # Utility functions
+│   ├── i18n/               # Internationalization
+│   └── styles/             # Stylesheets
+├── public/                 # Static assets
+├── package.json
+├── vite.config.ts
+└── Dockerfile
+```
 
-## Getting Started
+## 📋 Prerequisites
 
-### Prerequisites
+- **Node.js**: 18.x or higher
+- **npm** or **yarn**: Latest version
+- **Docker** & **Docker Compose**: (optional, for containerized setup)
 
-- Node.js (v18 or higher)
-- npm or yarn
+## 🚀 Quick Start
 
-### Installation
+### Local Development Setup
 
-1. Navigate to the project directory:
-   ```bash
-   cd "FunZone Owner App"
-   ```
-
-2. Install dependencies:
+1. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+2. **Set up environment variables**:
+   Create a `.env` file:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8000/api
+   VITE_DEV_PORT=5173
+   ```
+
+3. **Start development server**:
    ```bash
    npm run dev
    ```
 
-4. Open your browser and visit `http://localhost:5173`
+The app will be available at `http://localhost:5173`
 
-## Project Structure
+### Docker Setup
 
-```
-src/
-├── components/          # Reusable UI components
-├── contexts/           # React contexts (Language, Auth)
-├── i18n/              # Internationalization
-│   ├── translations/  # Translation files (en.json, fa.json)
-│   └── index.ts       # i18n configuration
-├── pages/             # Page components
-│   ├── DashboardPage.tsx
-│   ├── VenuesPage.tsx
-│   ├── EventsPage.tsx
-│   ├── WalletPage.tsx
-│   ├── AnalyticsPage.tsx
-│   ├── ProfilePage.tsx
-│   └── LoginPage.tsx
-├── state/             # State management
-│   └── authStore.tsx  # Authentication store
-├── types/             # TypeScript type definitions
-│   └── owner.ts       # Owner, Venue, Event types
-├── ui/                # Layout components
-│   └── AppLayout.tsx  # Main layout with navigation
-├── App.tsx            # Main app component
-├── main.tsx           # App entry point
-└── index.css          # Global styles with Tailwind
+```bash
+# Build and run
+docker build -t funzone-frontend-owner .
+docker run -p 80:80 funzone-frontend-owner
+
+# Or use with docker-compose (see funzone-infrastructure repository)
 ```
 
-## Features Overview
+## 🔧 Environment Variables
 
-### Authentication
-- Phone number verification
-- Mock authentication system
-- Persistent login state
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:8000/api` |
+| `VITE_DEV_PORT` | Development port | `5173` |
 
-### Dashboard
-- Business overview with key metrics
-- Quick action buttons
-- Recent activity summary
-
-### Venue Management
-- List all venues with status
-- Add new venues with form
-- Edit venue information
-- View venue performance metrics
-
-### Event Management
-- List all events with status
-- Add new events with form
-- Edit event information
-- View event performance metrics
-
-### Wallet System
-- View current balance
-- Deposit money
-- Withdraw money
-- Transaction history
-
-### Analytics
-- Revenue metrics (total, monthly, weekly, daily)
-- Performance metrics
-- Top performing venues and events
-- Business recommendations
-
-### Profile Management
-- View and edit profile information
-- Business statistics
-- Settings and preferences
-- Logout functionality
-
-## Internationalization
-
-The app supports multiple languages:
-- English (en)
-- Persian/Farsi (fa) with RTL support
-
-Language can be switched using the language switcher in the header.
-
-## Styling
-
-The app uses Tailwind CSS with custom components:
-- Glass morphism effects
-- Gradient backgrounds
-- Responsive design
-- Dark theme
-- Custom animations
-
-## Development
-
-### Available Scripts
+## 📚 Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 
-### Adding New Features
+## 🛠️ Tech Stack
 
-1. Create new page components in `src/pages/`
-2. Add routes in `src/main.tsx`
-3. Update navigation in `src/ui/AppLayout.tsx`
-4. Add translations in `src/i18n/translations/`
-5. Update types in `src/types/owner.ts` if needed
+- **Framework**: React 18.3.1
+- **Language**: TypeScript
+- **Build Tool**: Vite 5.4.2
+- **Styling**: Tailwind CSS 3.4.10
+- **Routing**: React Router DOM 6.26.2
+- **Calendar**: react-multi-date-picker with Persian calendar support
+- **Maps**: Leaflet with react-leaflet
+- **Charts**: Recharts for analytics
 
-## Mock Data
+## 🎨 Key Features Implementation
 
-The app currently uses mock data for demonstration. In a real application, you would:
-- Connect to a backend API
-- Implement real authentication
-- Add data persistence
-- Include real payment processing
+### Venue Management
+- Create and edit venues
+- Upload venue images
+- Set venue amenities and features
+- Location management
 
-## Contributing
+### Event Management
+- Create events with details
+- Set pricing and capacity
+- Manage event images
+- Track event status
+
+### Analytics Dashboard
+- Revenue tracking
+- Booking trends
+- Event performance metrics
+- Customer insights
+
+## 🧪 Testing
+
+```bash
+npm test
+```
+
+## 🚀 Deployment
+
+1. **Build production bundle**:
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy `dist/` folder** to your web server (Nginx, Apache, etc.)
+
+3. **Configure environment variables** in your hosting platform
+
+## 📦 Dependencies
+
+See `package.json` for all dependencies.
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is part of the FunZone ecosystem for venue and event management.
+[Your License]
+
+## 🔗 Related Repositories
+
+- [funzone-backend](../funzone-backend) - Django REST API
+- [funzone-frontend-customer](../funzone-frontend-customer) - Customer React App
+- [funzone-infrastructure](../funzone-infrastructure) - Docker Compose setup
 
