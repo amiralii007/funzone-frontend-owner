@@ -514,18 +514,16 @@ class ApiService {
     const endpoint = ownerId 
       ? `/social-hubs/?owner_id=${ownerId}`
       : '/social-hubs/'
+    // Disable caching for venues in owner app so changes appear immediately
     return this.get(endpoint, true, {
-      enabled: true,
-      ttl: 5 * 60 * 1000, // 5 minutes
-      tags: ['social_hubs', 'social_hubs_list', ownerId ? `owner_${ownerId}` : 'all'],
+      enabled: false,
     })
   }
 
   async getVenue(venueId: string): Promise<any> {
+    // Disable caching for single venue as well
     return this.get(`/social-hubs/${venueId}/`, true, {
-      enabled: true,
-      ttl: 5 * 60 * 1000, // 5 minutes
-      tags: ['social_hubs', `social_hub_${venueId}`],
+      enabled: false,
     })
   }
 

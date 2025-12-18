@@ -5,6 +5,8 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { formatNumber, formatCurrency, formatDate, formatPersianNumber } from '../utils/persianNumbers'
 import { apiService } from '../services/apiService'
 
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { state } = useAuth()
@@ -362,7 +364,7 @@ export default function DashboardPage() {
         <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-xl sm:text-2xl font-bold shadow-glow overflow-hidden">
           {isLoggedIn && state.auth.user?.avatar ? (
             <img 
-              src={`/avatars/${state.auth.user.avatar}`} 
+              src={`${ASSET_BASE_URL}avatars/${state.auth.user.avatar}`} 
               alt={state.auth.user.f_name || 'Owner'} 
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -650,7 +652,7 @@ export default function DashboardPage() {
                     <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {comment.customer?.avatar ? (
                         <img 
-                          src={`/avatars/${comment.customer.avatar}`} 
+                          src={`${ASSET_BASE_URL}avatars/${comment.customer.avatar}`} 
                           alt={comment.username} 
                           className="w-full h-full object-cover"
                           onError={(e) => {

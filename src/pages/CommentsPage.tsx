@@ -6,6 +6,8 @@ import { useAuth } from '../state/authStore'
 import { apiService } from '../services/apiService'
 import { formatSolarHijriDate } from '../utils/solarHijriCalendar'
 
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+
 // Comment interface based on API response
 interface ApiComment {
   id: string
@@ -433,10 +435,10 @@ export default function CommentsPage() {
               <div key={comment.id} id={`comment-${comment.id}`} className="glass-card p-4 md:p-6">
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {comment.customer?.avatar ? (
                       <img 
-                        src={`/avatars/${comment.customer.avatar}`} 
+                        src={`${ASSET_BASE_URL}avatars/${comment.customer.avatar}`} 
                         alt={comment.username} 
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -516,7 +518,7 @@ export default function CommentsPage() {
                                 <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
                                   {reply.customer?.avatar ? (
                                     <img 
-                                      src={`/avatars/${reply.customer.avatar}`} 
+                                      src={`${ASSET_BASE_URL}avatars/${reply.customer.avatar}`} 
                                       alt={replyFullName} 
                                       className="w-full h-full object-cover"
                                       onError={(e) => {

@@ -4,6 +4,8 @@ import { useLanguage } from '../contexts/LanguageContext'
 import ScrollToTop from '../components/ScrollToTop'
 // import { useAuth } from '../state/authStore' // Unused for now
 
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+
 function TabLink({ to, label, icon }: { to: string; label: string; icon: string }) {
   const { t } = useLanguage()
   return (
@@ -122,7 +124,7 @@ export default function AppLayout() {
           {/* Center - Logo */}
           <div className="flex items-center">
             <img 
-              src="/logo.png" 
+              src={`${ASSET_BASE_URL}logo.png`} 
               alt="Funzone" 
               className="h-8 sm:h-10 md:h-12 lg:h-14 w-auto object-contain"
             />

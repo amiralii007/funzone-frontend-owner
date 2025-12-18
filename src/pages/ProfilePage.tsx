@@ -7,6 +7,8 @@ import { apiService } from '../services/apiService'
 import { formatPersianCurrency, toPersianNumbers, formatPersianNumber, formatNumber, formatCurrency } from '../utils/persianNumbers'
 import SolarHijriDatePicker from '../components/SolarHijriDatePicker'
 
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+
 export default function ProfilePage() {
   const { state, logout, updateOwner } = useAuth()
   const { t, isRTL, language } = useLanguage()
@@ -322,7 +324,7 @@ export default function ProfilePage() {
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 mx-auto grid place-items-center text-2xl sm:text-3xl font-bold shadow-glow overflow-hidden">
           {state.auth.user.avatar ? (
             <img 
-              src={`/avatars/${state.auth.user.avatar}`} 
+              src={`${ASSET_BASE_URL}avatars/${state.auth.user.avatar}`} 
               alt="Profile" 
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -475,7 +477,7 @@ export default function ProfilePage() {
                   <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-purple-500 to-teal-500 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {formData.avatar ? (
                       <img 
-                        src={`/avatars/${formData.avatar}`} 
+                        src={`${ASSET_BASE_URL}avatars/${formData.avatar}`} 
                         alt="Avatar" 
                         className="w-full h-full object-cover"
                       />
@@ -510,7 +512,7 @@ export default function ProfilePage() {
                         }`}
                       >
                         <img 
-                          src={`/avatars/${avatar}`} 
+                          src={`${ASSET_BASE_URL}avatars/${avatar}`} 
                           alt={avatar} 
                           className="w-full h-full object-cover"
                         />

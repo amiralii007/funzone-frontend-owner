@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+
 interface SplashScreenProps {
   onComplete: () => void
 }
@@ -85,7 +87,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             onEnded={handleVideoEnded}
             onError={handleVideoError}
           >
-            <source src="/splash.mp4" type="video/mp4" />
+            <source src={`${ASSET_BASE_URL}splash.mp4`} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         ) : (
@@ -93,7 +95,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           <div className="w-full h-full bg-gradient-to-br from-purple-900 via-slate-900 to-teal-900 flex items-center justify-center">
             <div className="text-center space-y-4">
               <img 
-                src="/logo.png" 
+                src={`${ASSET_BASE_URL}logo.png`} 
                 alt="Funzone" 
                 className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto object-contain mx-auto animate-pulse"
               />
@@ -110,7 +112,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
           <div className="text-center space-y-4">
             <img 
-              src="/logo.png" 
+              src={`${ASSET_BASE_URL}logo.png`} 
               alt="Funzone" 
               className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto object-contain mx-auto animate-pulse"
             />

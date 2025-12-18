@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
+
+const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
 import BackButton from '../components/BackButton'
 import ScrollToTop from '../components/ScrollToTop'
 import { toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
@@ -350,9 +352,9 @@ export default function LoginPage() {
         
         <div className="relative z-10">
           <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center shadow-glow-pink">
-            {step === 'phone' && <img src="/logo.png" alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
-            {step === 'code' && <img src="/logo.png" alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
-            {step === 'profile' && <img src="/logo.png" alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
+            {step === 'phone' && <img src={`${ASSET_BASE_URL}logo.png`} alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
+            {step === 'code' && <img src={`${ASSET_BASE_URL}logo.png`} alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
+            {step === 'profile' && <img src={`${ASSET_BASE_URL}logo.png`} alt="Funzone" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />}
           </div>
           
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-2 sm:mb-3">
@@ -561,8 +563,8 @@ export default function LoginPage() {
                   id="national-code-input"
                   type="text"
                   placeholder={t('owner.enterNationalCode')}
-                  value={profileData.nationalCode}
-                  onChange={(e) => setProfileData({...profileData, nationalCode: e.target.value.replace(/[^\d]/g, '').slice(0, 10)})}
+                  value={language === 'fa' ? toPersianNumbers(profileData.nationalCode) : profileData.nationalCode}
+                  onChange={(e) => setProfileData({...profileData, nationalCode: toEnglishNumbers(e.target.value).replace(/[^\d]/g, '').slice(0, 10)})}
                   className="bg-transparent flex-1 outline-none text-slate-100 placeholder-slate-400 text-responsive-base focus-ring"
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
