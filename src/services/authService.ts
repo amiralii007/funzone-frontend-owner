@@ -112,8 +112,19 @@ class AuthService {
     }
 
     // Add authorization header if required and token is available
-    if (requireAuth && this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`
+    // Reload tokens from storage to ensure we have the latest token after login
+    if (requireAuth) {
+      this.loadTokensFromStorage() // Reload tokens from localStorage
+      if (this.accessToken) {
+        headers['Authorization'] = `Bearer ${this.accessToken}`
+      } else {
+        // If no token in instance, try localStorage directly
+        const tokenFromStorage = localStorage.getItem('access_token')
+        if (tokenFromStorage) {
+          this.accessToken = tokenFromStorage
+          headers['Authorization'] = `Bearer ${tokenFromStorage}`
+        }
+      }
     }
 
     const config: RequestInit = {
@@ -125,13 +136,19 @@ class AuthService {
       let response = await fetch(url, config)
       
       // If unauthorized and we have a refresh token, try to refresh
-      if (response.status === 401 && requireAuth && this.refreshToken) {
-        const newAccessToken = await this.refreshAccessToken()
-        if (newAccessToken) {
-          // Retry the request with the new access token
-          headers['Authorization'] = `Bearer ${newAccessToken}`
-          config.headers = headers
-          response = await fetch(url, config)
+      if (response.status === 401 && requireAuth) {
+        // Reload tokens from storage before attempting refresh
+        this.loadTokensFromStorage()
+        const refreshToken = this.refreshToken || localStorage.getItem('refresh_token')
+        if (refreshToken) {
+          this.refreshToken = refreshToken
+          const newAccessToken = await this.refreshAccessToken()
+          if (newAccessToken) {
+            // Retry the request with the new access token
+            headers['Authorization'] = `Bearer ${newAccessToken}`
+            config.headers = headers
+            response = await fetch(url, config)
+          }
         }
       }
       
