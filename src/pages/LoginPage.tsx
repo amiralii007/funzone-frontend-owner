@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 import BackButton from '../components/BackButton'
 import ScrollToTop from '../components/ScrollToTop'
 import { toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'

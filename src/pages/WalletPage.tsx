@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../state/authStore'
 import { useLanguage } from '../contexts/LanguageContext'
 import { formatCurrency, formatDate, formatNumberWithCommas, parseFormattedNumber, toPersianNumbers, toEnglishNumbers } from '../utils/persianNumbers'
 import type { Transaction } from '../types/owner'
 import { apiService } from '../services/apiService'
+import { API_CONFIG } from '../config/api'
 
 export default function WalletPage() {
   const { state, updateOwner } = useAuth()
   const { t, isRTL, language } = useLanguage()
+  const navigate = useNavigate()
   const [showDepositForm, setShowDepositForm] = useState(false)
   const [showWithdrawForm, setShowWithdrawForm] = useState(false)
   const [depositAmount, setDepositAmount] = useState('')
@@ -17,6 +20,48 @@ export default function WalletPage() {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [hasCheckedStatus, setHasCheckedStatus] = useState(false)
+
+  // Check if owner is deactivated - fetch fresh data from API
+  useEffect(() => {
+    if (hasCheckedStatus) return // Prevent duplicate checks
+
+    const checkOwnerStatus = async () => {
+      try {
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        const response = await fetch(`${API_CONFIG.API_BASE_URL}/auth/profile/`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        setHasCheckedStatus(true) // Mark as checked
+
+        if (response.status === 403) {
+          // Owner is deactivated, backend returned forbidden
+          alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+          navigate('/')
+          return
+        }
+
+        if (response.ok) {
+          const userData = await response.json()
+          if (userData.is_active === false) {
+            alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+            navigate('/')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking owner status:', error)
+        setHasCheckedStatus(true) // Mark as checked even on error
+      }
+    }
+
+    checkOwnerStatus()
+  }, [navigate, t, hasCheckedStatus])
 
   // Fetch transactions on component mount
   useEffect(() => {

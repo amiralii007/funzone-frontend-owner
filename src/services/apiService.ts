@@ -719,6 +719,18 @@ class ApiService {
     return this.patch(`/support/tickets/${ticketId}/update-status/`, { status }, true, ['support', `support_ticket_${ticketId}`, 'support_tickets'])
   }
 
+  async getSupportUnreadCount(): Promise<{ unread_count: number }> {
+    return this.get('/support/tickets/unread-count/', true, {
+      enabled: true,
+      ttl: 30 * 1000, // 30 seconds
+      tags: ['support', 'support_unread_count'],
+    })
+  }
+
+  async markTicketAsRead(ticketId: string): Promise<any> {
+    return this.post(`/support/tickets/${ticketId}/mark-as-read/`, {}, true, ['support', `support_ticket_${ticketId}`, 'support_tickets'])
+  }
+
   async getSupportTicketStats(): Promise<any> {
     return this.get('/support/tickets/stats/', true, {
       enabled: true,

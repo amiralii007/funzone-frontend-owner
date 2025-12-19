@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { formatNumber, formatCurrency, formatDate, formatPersianNumber } from '../utils/persianNumbers'
 import { apiService } from '../services/apiService'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 
 export default function DashboardPage() {
   const navigate = useNavigate()
