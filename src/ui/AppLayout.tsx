@@ -1,10 +1,11 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import ScrollToTop from '../components/ScrollToTop'
-// import { useAuth } from '../state/authStore' // Unused for now
+import { useAuth } from '../state/authStore'
+import { apiService } from '../services/apiService'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 
 function TabLink({ to, label, icon }: { to: string; label: string; icon: string }) {
   const { t } = useLanguage()
@@ -95,7 +96,26 @@ function LanguageSwitcher() {
 
 export default function AppLayout() {
   const { t, isRTL } = useLanguage()
-  // const { state } = useAuth() // Unused for now
+  const { state } = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (state.auth.isAuthenticated && state.auth.user) {
+      fetchUnreadCount()
+      // Poll every 30 seconds for new messages
+      const interval = setInterval(fetchUnreadCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [state.auth.isAuthenticated, state.auth.user])
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await apiService.getSupportUnreadCount()
+      setUnreadCount(data.unread_count || 0)
+    } catch (err) {
+      console.error('Error fetching unread count:', err)
+    }
+  }
   
   return (
     <div className={`min-h-dvh w-full relative flex flex-col ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -135,10 +155,15 @@ export default function AppLayout() {
             <LanguageSwitcher />
             <NavLink 
               to="/support" 
-              className="chip inline-flex items-center gap-1 text-xs sm:text-sm hover:scale-105 transition-transform"
+              className="chip inline-flex items-center gap-1 text-xs sm:text-sm hover:scale-105 transition-transform relative"
             >
               <span className="text-sm">🎧</span>
               <span className="hidden xs:inline">{t('support.title')}</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </NavLink>
           </div>
         </div>

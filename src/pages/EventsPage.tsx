@@ -28,6 +28,48 @@ export default function EventsPage() {
   const [isLoadingSocialHubs, setIsLoadingSocialHubs] = useState(false)
   const [eventCategories, setEventCategories] = useState<any[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const [hasCheckedStatus, setHasCheckedStatus] = useState(false)
+
+  // Check if owner is deactivated - fetch fresh data from API
+  useEffect(() => {
+    if (hasCheckedStatus) return // Prevent duplicate checks
+
+    const checkOwnerStatus = async () => {
+      try {
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        const response = await fetch(`${API_CONFIG.API_BASE_URL}/auth/profile/`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        setHasCheckedStatus(true) // Mark as checked
+
+        if (response.status === 403) {
+          // Owner is deactivated, backend returned forbidden
+          alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+          navigate('/')
+          return
+        }
+
+        if (response.ok) {
+          const userData = await response.json()
+          if (userData.is_active === false) {
+            alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+            navigate('/')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking owner status:', error)
+        setHasCheckedStatus(true) // Mark as checked even on error
+      }
+    }
+
+    checkOwnerStatus()
+  }, [navigate, t, hasCheckedStatus])
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -579,6 +621,24 @@ export default function EventsPage() {
 
   // Handle delete event
   const handleDeleteEvent = async (event: Event) => {
+    // Check if event is completed
+    if (isEventCompleted(event)) {
+      alert(t('owner.cannotDeleteCompletedEvent'))
+      return
+    }
+    
+    // Check if event is cancelled
+    if (isEventCancelled(event)) {
+      alert(t('owner.cannotDeleteCancelledEvent'))
+      return
+    }
+    
+    // Check if tickets have been sold
+    if (event.total_bookings > 0) {
+      alert(t('owner.cannotDeleteEventWithSoldTickets'))
+      return
+    }
+    
     setEventToDelete(event)
     setShowDeleteConfirm(true)
   }
@@ -715,8 +775,19 @@ export default function EventsPage() {
       
     } catch (error) {
       console.error('Error creating event:', error)
-      const translatedError = getErrorMessage(error, language)
-      alert(translatedError || t('owner.errorCreatingEvent'))
+      let errorMessage = getErrorMessage(error, language)
+      
+      // Check for specific venue deactivated error
+      const errorStr = typeof error === 'string' ? error : 
+                      (error instanceof Error ? error.message : 
+                      (typeof error === 'object' && error?.error ? String(error.error) : ''))
+      
+      if (errorStr.includes('VENUE_DEACTIVATED_CALL_SUPPORT') || 
+          errorMessage.includes('VENUE_DEACTIVATED_CALL_SUPPORT')) {
+        errorMessage = t('owner.venueDeactivatedCannotCreateEvent')
+      }
+      
+      alert(errorMessage || t('owner.errorCreatingEvent'))
     } finally {
       setIsLoading(false)
     }
@@ -1311,8 +1382,17 @@ export default function EventsPage() {
                 </button>
                 <button 
                   onClick={() => handleDeleteEvent(event)}
-                  className="btn-danger text-xs px-3 py-1.5 flex items-center gap-1"
-                  disabled={isDeleting}
+                  className={`btn-danger text-xs px-3 py-1.5 flex items-center gap-1 ${
+                    (isDeleting || event.total_bookings > 0 || isCompleted || isCancelled) 
+                      ? 'bg-red-800/60 hover:bg-red-800/60 cursor-not-allowed opacity-60 hover:scale-100 hover:shadow-lg' 
+                      : ''
+                  }`}
+                  disabled={isDeleting || (event.total_bookings > 0) || isCompleted || isCancelled}
+                  title={
+                    isCompleted ? t('owner.cannotDeleteCompletedEvent') :
+                    isCancelled ? t('owner.cannotDeleteCancelledEvent') :
+                    event.total_bookings > 0 ? t('owner.cannotDeleteEventWithSoldTickets') : ''
+                  }
                 >
                   <span>🗑️</span>
                   {t('common.delete')}
@@ -1428,6 +1508,11 @@ export default function EventsPage() {
                       value={formData.date}
                       onChange={(value) => handleInputChange('date', value)}
                       min={new Date().toISOString().split('T')[0]}
+                      max={(() => {
+                        const maxDate = new Date()
+                        maxDate.setMonth(maxDate.getMonth() + 3)
+                        return maxDate.toISOString().split('T')[0]
+                      })()}
                       required
                       language={language}
                     />
@@ -1530,7 +1615,7 @@ export default function EventsPage() {
                       id="event-price"
                       type="text" 
                       className={`input-field w-full pr-16 ${fieldErrors.price ? 'border-red-500 border-2' : ''}`}
-                      value={language === 'fa' ? toPersianNumbers(formData.price) : formData.price}
+                      value={language === 'fa' ? toPersianNumbers(formatNumberWithCommas(formData.price)) : formatNumberWithCommas(formData.price)}
                       onChange={(e) => {
                         const value = e.target.value
                         // Convert Persian numbers to English and validate

@@ -6,7 +6,7 @@ import { useAuth } from '../state/authStore'
 import { apiService } from '../services/apiService'
 import { formatSolarHijriDate } from '../utils/solarHijriCalendar'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 
 // Comment interface based on API response
 interface ApiComment {

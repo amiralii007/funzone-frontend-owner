@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 
 interface SplashScreenProps {
   onComplete: () => void

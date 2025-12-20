@@ -52,6 +52,7 @@ const errorTranslations: Record<string, string> = {
   'Error loading events': 'خطا در بارگذاری رویدادها',
   'Error deleting event': 'خطا در حذف رویداد',
   'Error creating venue': 'خطا در ایجاد کافه',
+  'VENUE_DEACTIVATED_CALL_SUPPORT': 'این کافه غیرفعال شده است. لطفاً برای افزودن رویداد با پشتیبانی تماس بگیرید.',
   'Backend connection failed. Please check if Django server is running on port 8000.': 'اتصال به سرور ناموفق بود. لطفاً بررسی کنید که سرور Django روی پورت 8000 در حال اجرا است.',
 }
 

@@ -17,6 +17,7 @@ interface SupportTicket {
   category: string
   comments?: any[]
   comment_count?: number
+  last_read_at?: string | null
 }
 
 export default function SupportPage() {
@@ -70,10 +71,21 @@ export default function SupportPage() {
     try {
       const ticket = await apiService.getSupportTicket(ticketId)
       setSelectedTicket(ticket)
+      // Mark ticket as read when viewing
+      try {
+        await apiService.markTicketAsRead(ticketId)
+        // Update ticket with current timestamp as last_read_at
+        const now = new Date().toISOString()
+        ticket.last_read_at = now
+      } catch (err) {
+        console.error('Error marking ticket as read:', err)
+      }
       // Update the ticket in the list
       setTickets(prevTickets =>
         prevTickets.map(t => t.id === ticketId ? ticket : t)
       )
+      // Refresh unread count
+      fetchUnreadCount()
     } catch (err) {
       console.error('Error fetching ticket details:', err)
       setError(err instanceof Error ? err.message : 'Failed to load ticket details')
@@ -291,13 +303,18 @@ export default function SupportPage() {
           </button>
           <button
             onClick={() => setActiveTab('tickets')}
-            className={`flex-1 py-2 px-4 rounded-lg text-responsive-sm font-medium transition-all ${
+            className={`flex-1 py-2 px-4 rounded-lg text-responsive-sm font-medium transition-all relative ${
               activeTab === 'tickets'
                 ? 'bg-purple-500 text-white'
                 : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/40'
             }`}
           >
             {t('support.myTickets')}
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('create')}
@@ -489,11 +506,24 @@ export default function SupportPage() {
               <p className="text-slate-400">{t('common.loading') || 'Loading...'}</p>
             </div>
           ) : tickets.length > 0 ? (
-            tickets.map((ticket) => (
-              <div key={ticket.id} className="glass-card p-6">
+            tickets.map((ticket) => {
+              // Check if ticket has unread admin messages
+              const hasUnread = (() => {
+                if (!ticket.comments || ticket.comments.length === 0) return false
+                const adminComments = ticket.comments.filter((c: any) => c.is_admin)
+                if (adminComments.length === 0) return false
+                const latestAdminComment = adminComments.reduce((latest: any, current: any) => {
+                  return new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+                })
+                if (!ticket.last_read_at) return true
+                return new Date(ticket.last_read_at) < new Date(latestAdminComment.created_at)
+              })()
+
+              return (
+              <div key={ticket.id} className={`glass-card p-6 ${hasUnread ? 'border-2 border-red-500/50 bg-red-500/5' : ''}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="text-responsive-sm font-semibold text-slate-200 mb-1">
+                    <h3 className={`text-responsive-sm font-semibold mb-1 ${hasUnread ? 'text-red-400' : 'text-slate-200'}`}>
                       {ticket.title}
                     </h3>
                     <p className="text-responsive-sm text-slate-400 mb-2">
@@ -532,7 +562,8 @@ export default function SupportPage() {
                   </button>
                 </div>
               </div>
-            ))
+              )
+            })
           ) : (
             <div className="glass-card p-8 text-center">
               <div className="text-4xl mb-4">🎫</div>

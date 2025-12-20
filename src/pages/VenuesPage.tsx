@@ -24,6 +24,48 @@ export default function VenuesPage() {
   const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [togglingVenue, setTogglingVenue] = useState<string | null>(null)
+  const [hasCheckedStatus, setHasCheckedStatus] = useState(false)
+
+  // Check if owner is deactivated - fetch fresh data from API
+  useEffect(() => {
+    if (hasCheckedStatus) return // Prevent duplicate checks
+
+    const checkOwnerStatus = async () => {
+      try {
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        const response = await fetch(`${API_CONFIG.API_BASE_URL}/auth/profile/`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+
+        setHasCheckedStatus(true) // Mark as checked
+
+        if (response.status === 403) {
+          // Owner is deactivated, backend returned forbidden
+          alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+          navigate('/')
+          return
+        }
+
+        if (response.ok) {
+          const userData = await response.json()
+          if (userData.is_active === false) {
+            alert(t('owner.accountDeactivated') || 'You are deactivated by support. Call support for more details.')
+            navigate('/')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking owner status:', error)
+        setHasCheckedStatus(true) // Mark as checked even on error
+      }
+    }
+
+    checkOwnerStatus()
+  }, [navigate, t, hasCheckedStatus])
   
   // Check if user is admin (staff or superuser)
   const isAdmin = () => {

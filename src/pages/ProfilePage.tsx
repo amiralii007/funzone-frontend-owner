@@ -7,7 +7,7 @@ import { apiService } from '../services/apiService'
 import { formatPersianCurrency, toPersianNumbers, formatPersianNumber, formatNumber, formatCurrency } from '../utils/persianNumbers'
 import SolarHijriDatePicker from '../components/SolarHijriDatePicker'
 
-const ASSET_BASE_URL = import.meta.env.BASE_URL || '/'
+const ASSET_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
 
 export default function ProfilePage() {
   const { state, logout, updateOwner } = useAuth()
@@ -355,12 +355,14 @@ export default function ProfilePage() {
             @{state.auth.user.username || 'username'}
           </p>
         </div>
-        <button 
-          onClick={handleEditClick}
-          className="btn-secondary hover-scale"
-        >
-          {t('owner.editProfile')}
-        </button>
+        {!showEditForm && (
+          <button 
+            onClick={handleEditClick}
+            className="btn-secondary hover-scale"
+          >
+            {t('owner.editProfile')}
+          </button>
+        )}
       </div>
 
       {/* Profile Information */}

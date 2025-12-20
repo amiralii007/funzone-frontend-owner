@@ -639,6 +639,9 @@
     "deleteVenueNote": "This will also delete all events related to this venue.",
     "venueDeletedSuccessfully": "Venue deleted successfully",
     "cannotDeleteVenueWithUpcomingEvents": "Cannot delete venue with upcoming events. Please cancel or complete upcoming events first.",
+    "cannotDeleteEventWithSoldTickets": "Cannot delete event with sold tickets. This event has tickets that have been purchased.",
+    "cannotDeleteCompletedEvent": "Cannot delete completed event. This event has already ended.",
+    "cannotDeleteCancelledEvent": "Cannot delete cancelled event. This event has already been cancelled.",
     "eventCompleted": "Event Completed - Minimum seats reached",
     "eventCancelled": "Event Cancelled - Minimum seats not reached",
     "ticketSalesClosed": "Ticket sales closed - Event cancelled due to insufficient participants",
@@ -646,7 +649,10 @@
     "ticketSalesWillClose": "Ticket sales will close {hours} hours before event",
     "startTimeInPast": "Start time is in the past",
     "invalidTimeCalculation": "Invalid time calculation",
-    "invalidTimeFormat": "Invalid time format"
+    "invalidTimeFormat": "Invalid time format",
+    "errorCreatingEvent": "Error creating event",
+    "venueDeactivatedCannotCreateEvent": "This venue has been deactivated. Please call support for adding events.",
+    "accountDeactivated": "You are deactivated by support. Call support for more details."
   },
   "validation": {
     "firstNameRequired": "First name is required",
